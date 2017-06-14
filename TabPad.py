@@ -14,12 +14,6 @@ import subprocess
 from TabPadConfig import *
 from PyQt5.QtGui import QCursor, QIcon
 
-# todo
-# implement individual button sizes in dict
-# support for fullscreen games
-# diagonal movement support
-# done: implement button transparency
-
 class TabPad(QWidget):
 	def __init__(self):
 		super(TabPad, self).__init__()
