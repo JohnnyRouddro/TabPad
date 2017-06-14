@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QPushButton
 from PyQt5.QtWidgets import QSystemTrayIcon, QStyle, QAction, QMenu
 import subprocess
 from TabPadConfig import *
-from PyQt5.QtGui import QCursor, QIcon
+from PyQt5.QtGui import QCursor, QIcon, QKeyEvent
 
 class TabPad(QWidget):
 	def __init__(self):
@@ -28,6 +28,8 @@ class TabPad(QWidget):
 		+ ";}"
 		self.setStyleSheet(self.stl)
 		self.appicon = QIcon.fromTheme("input-gaming")
+		self.pressed_keylist = []
+		self.first_released = False
 		self.initUI()
 
 	def initUI(self):
@@ -41,6 +43,7 @@ class TabPad(QWidget):
 		self.setGeometry(overlay_x_position, overlay_y_position, overlay_width, overlay_height)
 		self.setWindowTitle('TabPad')
 		self.show()
+		self.activateWindow()
 
 	def createandmove(self, label, xper, yper, command, color, btnsize):
 		self.qbtn = QPushButton(label, self)
@@ -54,6 +57,7 @@ class TabPad(QWidget):
 			self.qbtn.resize(button_width, button_height)
 		xpos, ypos = self.percentconvertor(xper, yper)
 		self.qbtn.move(xpos, ypos)
+		self.qbtn.setFocusPolicy(QtCore.Qt.NoFocus)
 
 	def percentconvertor(self, xpercent, ypercent):
 		xpos = int(round((overlay_width * xpercent)/100))
@@ -61,6 +65,7 @@ class TabPad(QWidget):
 		return xpos, ypos
 
 	def keyhandler(self, lbl):
+		# print (lbl)
 		def processinput():
 			if hide_on_close and lbl == "Hide":
 				self.hide()
@@ -82,7 +87,7 @@ class TabPad(QWidget):
 		self.show_action = QAction("Show", self)
 		self.quit_action = QAction("Exit", self)
 		self.hide_action = QAction("Hide", self)
-		self.show_action.triggered.connect(self.show)
+		self.show_action.triggered.connect(self.showpad)
 		self.hide_action.triggered.connect(self.hide)
 		self.quit_action.triggered.connect(self.quithandler)
 		self.tray_menu = QMenu()
@@ -100,6 +105,24 @@ class TabPad(QWidget):
 	def quithandler(self):
 		QtCore.QCoreApplication.instance().quit()
 		sys.exit(1)
+
+	def keyPressEvent(self, event):
+		self.first_released = True
+		self.key_input = str(event.key())
+		self.pressed_keylist.append(self.key_input)
+
+	def keyReleaseEvent(self, event):
+		if self.first_released == True: 
+			self.process_multiple_keys(self.pressed_keylist)
+		self.first_released = False
+		del self.pressed_keylist[-1]
+
+	def process_multiple_keys(self,keys_pressed):
+		print (keys_pressed)
+
+	def showpad(self):
+		self.show()
+		self.activateWindow()
 
 def main():
 	app = QApplication(sys.argv)
