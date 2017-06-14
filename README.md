@@ -14,8 +14,16 @@ TabPad is an onscreen gamepad for Linux touchscreen devices (mainly tablets).
 # Configuring TabPad  
 Edit `TabPadConfig.py` file.
 
-# TabPad is Not Transparent
+# FAQ
+**<u>Why TabPad is Not Transparent?</u>**
+
 TabPad transparency depends on your compositing manager. If the compositing manager do not support transparency, you may see an opaque or a translucent background. TapPad works absolutely fine with Compiz and Kwin.
+
+**<u>Why TapPad layout is weird with overlapping buttons?</u>**
+
+TabPad comes with a default layout. However different tablets with different screen sizes and resolution exist and it is difficult to define one standard layout. Further, the layout also depends on overlay geometry you define in `TabPadConfig.py` file.
+
+The best possible way to solve it is to change button position and size in `TabPadConfig.py` file as per your requirements.   
 
 # Current Limitations 
   * Diagonal movement keys are yet to be implemented.
