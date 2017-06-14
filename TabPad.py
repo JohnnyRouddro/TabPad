@@ -32,24 +32,24 @@ class TabPad(QWidget):
 
 	def initUI(self):
 		for k, v in button_layout.items():
-			self.createandmove(k, v[0], v[1], v[2], v[3])
+			self.createandmove(k, *v)
 		if hide_on_close:
-			self.createandmove("Hide", 35, 80, [], "#808080")
+			self.createandmove("Hide", 45, 5, [], "#808080", (70,30))
 		else:
-			self.createandmove("Close", 35, 80, [], "#808080")
+			self.createandmove("Close", 45, 5, [], "#808080", (70, 30))
 		self.systraysetup()
 		self.setGeometry(overlay_x_position, overlay_y_position, overlay_width, overlay_height)
 		self.setWindowTitle('TabPad')
 		self.show()
 
-	def createandmove(self, label, xper, yper, command, color):
+	def createandmove(self, label, xper, yper, command, color, btnsize):
 		self.qbtn = QPushButton(label, self)
 		self.clr = "background-color:rgba(" + str(self.hextorgb(color)) + "," \
 		+ str(button_opacity) + '%);'
 		self.qbtn.setStyleSheet(self.clr)
 		self.qbtn.clicked.connect(self.keyhandler(label))
-		if button_width == 0 and button_height == 0:
-			self.qbtn.resize(self.qbtn.sizeHint())
+		if override_button_size:
+			self.qbtn.resize(*btnsize)
 		else:
 			self.qbtn.resize(button_width, button_height)
 		xpos, ypos = self.percentconvertor(xper, yper)
