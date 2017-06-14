@@ -1,8 +1,9 @@
 # TabPad 
 TabPad is an onscreen gamepad for Linux touchscreen devices (mainly tablets).
 
-# Screenshot
+# Screenshots
 ![alt text](https://raw.githubusercontent.com/nitg16/TabPad/master/TabPad.jpg)
+![alt text](https://raw.githubusercontent.com/nitg16/TabPad/master/TabPad1.png)
 
 # Installation 
     sudo apt install python3-pyqt5 xdotool
