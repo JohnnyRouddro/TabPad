@@ -22,6 +22,9 @@ button_border_color = "#555555"
 # Opacity of buttons in percentage (100 is fully opaque).
 button_opacity = 100
 
+# Close button behavior (True minimizes to system tray, False closes the app)
+hide_on_close = True
+
 # The dictionary below defines your gamepad layout and properties.
 # The first value is identification label for your button (before colon).
 # The next two numbers are percentages defining position of a button.

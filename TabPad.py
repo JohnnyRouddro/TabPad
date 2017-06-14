@@ -33,7 +33,10 @@ class TabPad(QWidget):
 	def initUI(self):
 		for k, v in button_layout.items():
 			self.createandmove(k, v[0], v[1], v[2], v[3])
-		self.createandmove("Quit", 35, 80, [], "#808080")
+		if hide_on_close:
+			self.createandmove("Hide", 35, 80, [], "#808080")
+		else:
+			self.createandmove("Close", 35, 80, [], "#808080")
 		self.systraysetup()
 		self.setGeometry(overlay_x_position, overlay_y_position, overlay_width, overlay_height)
 		self.setWindowTitle('TabPad')
@@ -59,7 +62,9 @@ class TabPad(QWidget):
 
 	def keyhandler(self, lbl):
 		def processinput():
-			if lbl == "Quit":
+			if hide_on_close and lbl == "Hide":
+				self.hide()
+			elif not hide_on_close and lbl == "Close":
 				self.quithandler()
 			else:
 				cmnd = button_layout[lbl][2]
