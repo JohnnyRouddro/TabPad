@@ -2,6 +2,10 @@
 
 # Change Settings in this file
 
+# Enable or disable transparent background.
+# It can be useful in precise positioning of buttons.
+transparent_background = True
+
 # Position of transparent overlay window in x and y coordinates
 overlay_x_position = 0
 overlay_y_position = 300

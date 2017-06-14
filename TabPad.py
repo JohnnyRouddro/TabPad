@@ -21,7 +21,8 @@ class TabPad(QWidget):
 							QtCore.Qt.FramelessWindowHint |
 							QtCore.Qt.X11BypassWindowManagerHint
 							)
-		self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+		if transparent_background:
+			self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 		self.appicon = QIcon.fromTheme("input-gaming")
 		self.pressed_keylist = []
 		self.first_released = False
