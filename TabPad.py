@@ -22,11 +22,6 @@ class TabPad(QWidget):
 							QtCore.Qt.X11BypassWindowManagerHint
 							)
 		self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-		self.stl = "QWidget {background-color:rgba(0, 0, 0, 0%);border-width:" \
-		+ str(button_border_size)  + "px;border-style:solid;border-radius:" \
-		+ str(button_border_radius) + "px;border-color:" + str(button_border_color) \
-		+ ";}"
-		self.setStyleSheet(self.stl)
 		self.appicon = QIcon.fromTheme("input-gaming")
 		self.pressed_keylist = []
 		self.first_released = False
@@ -47,8 +42,11 @@ class TabPad(QWidget):
 
 	def createandmove(self, label, xper, yper, command, color, btnsize):
 		self.qbtn = QPushButton(label, self)
-		self.clr = "background-color:rgba(" + str(self.hextorgb(color)) + "," \
-		+ str(button_opacity) + '%);'
+		self.clr = "background-color:rgba(0, 0, 0, 0%);border-width:" \
+		+ str(button_border_size)  + "px;border-style:solid;border-radius:" \
+		+ str(button_border_radius) + "px;border-color:" + str(button_border_color) \
+		+ ";background-color:rgba(" + str(self.hextorgb(color)) + "," \
+		+ str(button_opacity) + '%)' + ";"
 		self.qbtn.setStyleSheet(self.clr)
 		self.qbtn.clicked.connect(self.keyhandler(label))
 		if override_button_size:
