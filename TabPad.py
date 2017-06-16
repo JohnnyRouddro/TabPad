@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
 # Run command below to install dependencies in Ubuntu.
-# sudo apt install python3-pyqt5 xdotool
+# sudo apt install python3-pyqt5 xdotool python3-evdev xinput
 
 # Launch TabPad by running command below.
-# python3 TabPad.py
+# sudo python3 TabPad.py
 
 import sys
 from PyQt5 import QtCore
@@ -172,10 +172,10 @@ class newThread (threading.Thread):
 			else:
 				lift_time = None
 
-			if ev.code == 0:
+			if ev.code == 53:
 				if ev.value > 0:
 					x_abs_val = ev.value
-			if ev.code == 1:
+			if ev.code == 54:
 				if ev.value > 0:
 					y_abs_val = ev.value
 
@@ -187,15 +187,19 @@ class newThread (threading.Thread):
 		return val
 
 	def compare_coords(self, actual_x, actual_y):
+		l = []
+		button_area = self.circle_points(actual_x, actual_y, 10)
 		for k, v in button_layout.items():
 			self.x_start_pos = self.percentconvertor(v[0], overlay_width)
 			self.x_end_pos = self.x_start_pos + v[4][0]
 			self.y_start_pos = self.percentconvertor(v[1], overlay_height)
-			self.y_end_pos = self.y_start_pos + v[4][1]
-			if actual_x >= self.x_start_pos and actual_x <= self.x_end_pos:
-				if actual_y >= self.y_start_pos and actual_y <= self.y_end_pos:
-					# print (v[2])
-					self.command_executor(v[2])
+			self.y_end_pos = self.y_start_pos + v[4][1] 
+			for c in button_area:
+				if c[0] >= self.x_start_pos and c[0] <= self.x_end_pos:
+					if c[1] >= self.y_start_pos and c[1] <= self.y_end_pos:
+						l.append(v[2])
+		l = self.remove_duplicates_in_array(l)
+		self.command_executor(l)
 
 	def xdotool_coords(self):
 		proc = subprocess.Popen("eval $(xdotool getmouselocation --shell) && echo $X $Y", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell = True ).communicate()
@@ -216,8 +220,27 @@ class newThread (threading.Thread):
 
 	def command_executor(self, command_array):
 		if command_array:
-			subprocess.Popen(command_array, stdout=subprocess.PIPE)
+			for c in command_array:
+				if c:
+					subprocess.Popen(c, stdout=subprocess.PIPE)
 
+	def circle_points(self, xcenter, ycenter, radius):
+		r = radius
+		xc = xcenter
+		yc = ycenter
+		points_array = []
+		for x in range(xc-r, xc+1):
+			for y in range(yc-r, yc+1):
+				if ((x - xc)*(x - xc) + (y - yc)*(y - yc)) <= r*r:
+					xcord = xc - (x - xc)
+					ycord = yc - (y - yc)
+					points_array.append((xcord, ycord))
+		return points_array
+
+	def remove_duplicates_in_array(self, array):
+		array = sorted(array)
+		a = [array[i] for i in range(len(array)) if i == 0 or array[i] != array[i-1]]
+		return a
 
 def main():
 	app = QApplication(sys.argv)
