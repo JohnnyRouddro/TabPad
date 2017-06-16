@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QPushButton
 from PyQt5.QtWidgets import QSystemTrayIcon, QStyle, QAction, QMenu
 import subprocess
 from TabPadConfig import *
-from PyQt5.QtGui import QCursor, QIcon, QKeyEvent
+from PyQt5.QtGui import QCursor, QIcon
 import time
 import evdev
 import threading
