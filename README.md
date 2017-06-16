@@ -6,11 +6,14 @@ TabPad is an onscreen gamepad for Linux touchscreen devices (mainly tablets).
 ![alt text](https://raw.githubusercontent.com/nitg16/TabPad/master/TabPad1.png)
 
 # Installation 
-    sudo apt install python3-pyqt5 xdotool
+    sudo apt install python3-pyqt5 xdotool python3-evdev xinput
 
 # Running TabPad 
-    python3 TabPad.py 
+Edit `TabPadConfig.py` file and enter your touch panel name (can be found out by running xinput command).
 
+    sudo python3 TabPad.py 
+
+Root access is REQUIRED to run this app otherwise it will fail immediately after launch. This is because user touch input cannot be read from device nodes without root access. 
 # Configuring TabPad  
 Edit `TabPadConfig.py` file.
 
