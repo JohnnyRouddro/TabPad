@@ -2,8 +2,9 @@
 
 # Change Settings in this file
 
-# Enter your touch input name below (can be found out by running xinput command)
-# Make sure enter this value correctly or the app will fail immediately after launch.
+# Delete what you see in quotes and enter your own touch panel name below.
+# It can be found out by running xinput command.
+# Make sure that you enter this value correctly or the app will fail immediately after launch.
 touch_panel = "GDIX1000:00 27C6:1002"
 
 # Enable or disable transparent background.
