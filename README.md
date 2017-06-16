@@ -31,3 +31,4 @@ The best possible way to solve it is to change button position and size in `TabP
 # Current Limitations 
   * Diagonal movement keys are yet to be implemented.
   * Works only in games running in windowed mode (no fullscreen support yet).
+  * TabPad may not work properly in portrait mode. Support for portrait mode will be improved once all features are implemented for landscape mode.
