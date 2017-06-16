@@ -31,7 +31,8 @@ class TabPad(QWidget):
 		if transparent_background:
 			self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 		self.setFocusPolicy(QtCore.Qt.NoFocus)	
-		self.appicon = QIcon.fromTheme("input-gaming")
+		# self.appicon = QIcon.fromTheme("input-gaming")
+		self.appicon = self.style().standardIcon(QStyle.SP_FileDialogListView)
 		self.screen_resolution = QApplication.desktop().screenGeometry()
 		self.screen_width, self.screen_height = self.screen_resolution.width(), self.screen_resolution.height()
 		self.eventThread = newThread(1, "Event Thread 1", touch_panel, self.screen_width, self.screen_height)
