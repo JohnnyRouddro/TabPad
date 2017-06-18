@@ -3,15 +3,15 @@
 import subprocess
 import time
 import evdev
-import threading
 from evdev import ecodes
 from decimal import Decimal
 from TabPadConfig import *
+import multiprocessing
 
-class newThread (threading.Thread):
-	def __init__(self, threadID, name, touch_panel, screen_width, screen_height):
-		threading.Thread.__init__(self)
-		self.threadID = threadID
+class newProcess (multiprocessing.Process):
+	def __init__(self, processID, name, touch_panel, screen_width, screen_height):
+		super(newProcess, self).__init__()
+		self.processID = processID
 		self.name = name
 		self.daemon = True
 		self.touch_panel = touch_panel
@@ -197,3 +197,8 @@ class newThread (threading.Thread):
 		output = str(output[0]).strip("\\n'")
 		output = output.strip("'b")
 		return output
+
+	def kill_process(self):
+		for p in multiprocessing.active_children():
+			p.terminate()
+		self.terminate()

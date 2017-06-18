@@ -28,8 +28,8 @@ class TabPad(QWidget):
 		self.appicon = self.style().standardIcon(QStyle.SP_FileDialogListView)
 		self.screen_resolution = QApplication.desktop().screenGeometry()
 		self.screen_width, self.screen_height = self.screen_resolution.width(), self.screen_resolution.height()
-		self.eventThread = newThread(1, "Event Thread 1", touch_panel, self.screen_width, self.screen_height)
-		self.eventThread.start()
+		self.eventProcess = newProcess(1, "Event Process 1", touch_panel, self.screen_width, self.screen_height)
+		self.eventProcess.start()
 		self.initUI()
 
 	def initUI(self):
@@ -72,7 +72,7 @@ class TabPad(QWidget):
 		# print (lbl)
 		def processinput():
 			if hide_on_close and lbl == "Hide":
-				self.hide()
+				self.hidepad()
 			elif not hide_on_close and lbl == "Close":
 				self.quithandler()
 		return processinput
@@ -89,7 +89,7 @@ class TabPad(QWidget):
 		self.quit_action = QAction("Exit", self)
 		self.hide_action = QAction("Hide", self)
 		self.show_action.triggered.connect(self.showpad)
-		self.hide_action.triggered.connect(self.hide)
+		self.hide_action.triggered.connect(self.hidepad)
 		self.quit_action.triggered.connect(self.quithandler)
 		self.tray_menu = QMenu()
 		self.tray_menu.addAction(self.show_action)
@@ -107,8 +107,18 @@ class TabPad(QWidget):
 		QtCore.QCoreApplication.instance().quit()
 		sys.exit(1)
 
+	def hidepad(self):
+		# os.kill(self.eventProcess.pid, signal.SIGSTOP)
+		self.eventProcess.kill_process()
+		self.hide()
+
 	def showpad(self):
+		# os.kill(self.eventProcess.pid, signal.SIGCONT)
 		self.show()
+		if self.eventProcess.is_alive():
+			self.eventProcess.kill_process()
+		self.eventProcess = newProcess(1, "Event Process 1", touch_panel, self.screen_width, self.screen_height)
+		self.eventProcess.start()
 		# self.activateWindow()
 
 def main():
