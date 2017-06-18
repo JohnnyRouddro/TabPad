@@ -18,6 +18,9 @@ class newThread (threading.Thread):
 		self.no_device_found = True
 		self.screen_width = screen_width
 		self.screen_height= screen_height
+		self.min_x, self.max_x = None, None
+		self.min_y, self.max_y = None, None
+		self.res_x, self.res_y = None, None
 		self.devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
 		# print (self.devices)
 		self.inputsetup()
@@ -33,6 +36,9 @@ class newThread (threading.Thread):
 			if (d.name == self.touch_panel):
 				input_node = d.fn
 				self.no_device_found = False
+				self.min_x, self.max_x = d.capabilities()[3][0][1][1], d.capabilities()[3][0][1][2]
+				self.min_y, self.max_y = d.capabilities()[3][1][1][1], d.capabilities()[3][1][1][2]
+				self.res_x, self.res_y = d.capabilities()[3][0][1][-1], d.capabilities()[3][1][1][-1]
 
 		if self.no_device_found == True:
 			print ("No touch input detected.")
@@ -50,6 +56,8 @@ class newThread (threading.Thread):
 		lift_time = None
 		x_abs_val = None
 		y_abs_val = None
+		finger0_coords = None
+		finger1_coords = None
 		for ev in self.device.read_loop():
 			# print (evdev.util.categorize(ev))
 			if ev.code == 330 and ev.value == 1:
@@ -69,8 +77,18 @@ class newThread (threading.Thread):
 				if ev.value > 0:
 					y_abs_val = ev.value
 
+			# if x_abs_val != None and y_abs_val != None and ev.code == 47:
+			# 	if ev.value == 0:
+			# 		finger0_coords = (x_abs_val, y_abs_val)
+			# 	if ev.value == 1:
+			# 		finger1_coords = (x_abs_val, y_abs_val)
+			# if (finger0_coords and finger1_coords) != None:
+			# 	if finger0_coords != finger1_coords:
+			# 		print ("finger0: ", finger0_coords)
+			# 		print ("finger1: ", finger1_coords)
+
 			if lift_time != None and x_abs_val != None and y_abs_val != None:
-				self.compare_coords(self.xdotool_coords()[0], self.xdotool_coords()[1])
+				self.compare_coords(*(self.convert_absolute_values((x_abs_val, y_abs_val))))
 
 	def percentconvertor(self, val, dimension):
 		val = int(round((dimension * val)/100))
@@ -90,23 +108,6 @@ class newThread (threading.Thread):
 						l.append(v[2])
 		l = self.remove_duplicates_in_array(l)
 		self.command_executor(l)
-
-	def xdotool_coords(self):
-		proc = subprocess.Popen("eval $(xdotool getmouselocation --shell) && echo $X $Y", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell = True ).communicate()
-		p = str(proc[0]).strip("\\n'")
-		p = p.strip("b'") 
-		xc = int(p.partition(' ')[0])
-		yc = int(p.partition(' ')[2])
-		# print (xc, yc)
-		if overlay_width < self.screen_width:
-			xc = xc - overlay_x_position
-			if xc < 0:
-				xc = 0
-		if overlay_height < self.screen_height:
-			yc = yc - overlay_y_position
-			if yc < 0:
-				yc = 0
-			return (xc, yc)
 
 	def command_executor(self, command_array):
 		if command_array:
@@ -131,3 +132,68 @@ class newThread (threading.Thread):
 		array = sorted(array)
 		a = [array[i] for i in range(len(array)) if i == 0 or array[i] != array[i-1]]
 		return a
+
+	def convert_absolute_values(self, value):
+		cmnd = "xrandr -q|grep -v dis|grep con|awk '{print $5}'"
+		output = self.get_bash_output(cmnd)
+
+		if coord_hack:
+			if self.current_ctm() == [1, 0, 0, 0, 1, 0, 0, 0, 1] or output == "normal":
+				xc = value[0]
+				yc = value[1]
+			elif self.current_ctm() == [-1, 0, 1, 0, -1, 1, 0, 0, 1] or output == "inverted":
+				xc = abs(self.max_x - value[0])
+				yc = abs(self.max_y - value[1])
+			elif self.current_ctm() == [0, -1, 1, 1, 0, 0, 0, 0, 1] or output == "left":
+				xc = abs(self.max_x - value[1])
+				yc = value[0]
+			elif self.current_ctm() == [0, 1, 0, -1, 0, 1, 0, 0, 1] or output == "right":
+				xc = value[1]
+				yc = abs(self.max_y - value[0])
+			else:
+				xc = value[0]
+				yc = value[1]
+		else:
+			xc = value[0]
+			yc = value[1]
+
+		xc = (xc - self.min_x) * self.screen_width / (self.max_x - self.min_x + 1)
+		yc = (yc - self.min_y) * self.screen_height / (self.max_y - self.min_y + 1)
+		xc = int(round(xc))
+		yc = int(round(yc))
+
+		if overlay_x_position < self.screen_width:
+			xc = xc - overlay_x_position
+			if xc < 0:
+				xc = 0
+		if overlay_y_position < self.screen_height:
+			yc = yc - overlay_y_position
+			if yc < 0:
+				yc = 0
+		# print (xc, yc)
+		return (xc, yc)
+
+	def current_ctm(self):
+		c = "echo $(xinput list-props '" + self.touch_panel \
+		+ "'| grep 'Coordinate Transformation Matrix' | sed 's/.*://')"
+		output = self.get_bash_output(c)
+		output = output.split(", ")
+		output = [int(float(i)) for i in output]
+		return output
+
+	def convert_coords_asper_ctm(self, coords, matrix):
+		x = coords[0]
+		y = coords[1]
+		a, b, c, d, e, f, g, h, i = matrix
+		w = (g*x + h*y + i)
+		x = (a*x + b*y + c) / w
+		y = (d*x + e*y + f) / w
+		x = int(round(x))
+		y = int(round(y))
+		return x, y	  
+
+	def get_bash_output(self, cmnd):
+		output = subprocess.Popen(cmnd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell = True ).communicate()
+		output = str(output[0]).strip("\\n'")
+		output = output.strip("'b")
+		return output
