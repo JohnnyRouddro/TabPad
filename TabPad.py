@@ -54,7 +54,8 @@ class TabPad(QWidget):
 		+ ";background-color:rgba(" + str(self.hextorgb(color)) + "," \
 		+ str(button_opacity) + '%)' + ";"
 		self.qbtn.setStyleSheet(self.clr)
-		self.qbtn.clicked.connect(self.keyhandler(label))
+		if label == "Hide" or label == "Close":
+			self.qbtn.clicked.connect(self.keyhandler(label))
 		if override_button_size:
 			self.qbtn.resize(*btnsize)
 		else:
