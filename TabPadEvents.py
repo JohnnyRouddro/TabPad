@@ -96,7 +96,7 @@ class newProcess (multiprocessing.Process):
 
 	def compare_coords(self, actual_x, actual_y):
 		l = []
-		button_area = self.circle_points(actual_x, actual_y, 10)
+		button_area = self.circle_points(actual_x, actual_y, detection_radius)
 		for k, v in button_layout.items():
 			self.x_start_pos = self.percentconvertor(v[0], overlay_width)
 			self.x_end_pos = self.x_start_pos + v[4][0]

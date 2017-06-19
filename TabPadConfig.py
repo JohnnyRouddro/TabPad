@@ -76,3 +76,9 @@ button_layout = {
 	"Select": (50, 92, ["xdotool", "key", "n"], "#800080", (70, 30)),
 	"Close_": (45, 5, [], "#808080", (70, 30))
 }
+
+# ADVANCED OPTIONS
+# DO NOT change them unless you know what you are doing.
+
+detection_radius = 10
+coord_adjustment_factor = 2
