@@ -58,6 +58,9 @@ class newProcess (multiprocessing.Process):
 		finger0_coords = None
 		finger1_coords = None
 		self.button_geometry = self.set_button_area()
+		self.current_orientation = "xrandr -q|grep -v dis|grep con|awk '{print $5}'"
+		self.current_orientation = self.get_bash_output(self.current_orientation)
+		
 		for ev in self.device.read_loop():
 			# print (evdev.util.categorize(ev))
 			if ev.code == 330 and ev.value == 1:
@@ -130,20 +133,17 @@ class newProcess (multiprocessing.Process):
 		return a
 
 	def convert_absolute_values(self, value):
-		cmnd = "xrandr -q|grep -v dis|grep con|awk '{print $5}'"
-		output = self.get_bash_output(cmnd)
-
 		if coord_hack:
-			if self.current_ctm() == [1, 0, 0, 0, 1, 0, 0, 0, 1] or output == "normal":
+			if self.current_ctm() == [1, 0, 0, 0, 1, 0, 0, 0, 1] or self.current_orientation == "normal":
 				xc = value[0]
 				yc = value[1]
-			elif self.current_ctm() == [-1, 0, 1, 0, -1, 1, 0, 0, 1] or output == "inverted":
+			elif self.current_ctm() == [-1, 0, 1, 0, -1, 1, 0, 0, 1] or self.current_orientation == "inverted":
 				xc = abs(self.max_x - value[0])
 				yc = abs(self.max_y - value[1])
-			elif self.current_ctm() == [0, -1, 1, 1, 0, 0, 0, 0, 1] or output == "left":
+			elif self.current_ctm() == [0, -1, 1, 1, 0, 0, 0, 0, 1] or self.current_orientation == "left":
 				xc = abs(self.max_x - value[1])
 				yc = value[0]
-			elif self.current_ctm() == [0, 1, 0, -1, 0, 1, 0, 0, 1] or output == "right":
+			elif self.current_ctm() == [0, 1, 0, -1, 0, 1, 0, 0, 1] or self.current_orientation == "right":
 				xc = value[1]
 				yc = abs(self.max_y - value[0])
 			else:
