@@ -60,20 +60,20 @@ hide_on_close = True
 # DO NOT change any label ending with underscore, e.g. "Close_"
 
 button_layout = {
-	"L1": (6, 5, ["xdotool", "key", "q"], "#ff0000", (70, 40)),
-	"L2": (14, 5, ["xdotool", "key", "w"], "#ff0000", (70, 40)),
-	"R1": (79, 5, ["xdotool", "key", "o"], "#ff0000", (70, 40)),
-	"R2": (87, 5, ["xdotool", "key", "p"], "#ff0000", (70, 40)),
-	"U": (12, 52, ["xdotool", "key", "Up"], "#ffffff", (40, 80)),
-	"R": (16, 67, ["xdotool", "key", "Right"], "#ffffff", (80, 40)),
-	"D": (12, 73, ["xdotool", "key", "Down"], "#ffffff", (40, 80)),
-	"L": (4, 67, ["xdotool", "key", "Left"], "#ffffff", (80, 40)),
-	"3": (83, 60, ["xdotool", "key", "i"], "#008000", (60, 60)),
-	"2": (91, 70, ["xdotool", "key", "l"], "#ffff00", (60, 60)),
-	"1": (83, 80, ["xdotool", "key", "k"], "#0000ff", (60, 60)),
-	"4": (75, 70, ["xdotool", "key", "j"], "#ffc0cb", (60, 60)),
-	"Start": (40, 92, ["xdotool", "key", "v"], "#ffa500", (70, 30)),
-	"Select": (50, 92, ["xdotool", "key", "n"], "#800080", (70, 30)),
+	"L1": (6, 5, ["xdotool", "keydown", "q"], "#ff0000", (70, 40)),
+	"L2": (14, 5, ["xdotool", "keydown", "w"], "#ff0000", (70, 40)),
+	"R1": (79, 5, ["xdotool", "keydown", "o"], "#ff0000", (70, 40)),
+	"R2": (87, 5, ["xdotool", "keydown", "p"], "#ff0000", (70, 40)),
+	"U": (12, 52, ["xdotool", "keydown", "Up"], "#ffffff", (40, 80)),
+	"R": (16, 67, ["xdotool", "keydown", "Right"], "#ffffff", (80, 40)),
+	"D": (12, 73, ["xdotool", "keydown", "Down"], "#ffffff", (40, 80)),
+	"L": (4, 67, ["xdotool", "keydown", "Left"], "#ffffff", (80, 40)),
+	"3": (83, 60, ["xdotool", "keydown", "i"], "#008000", (60, 60)),
+	"2": (91, 70, ["xdotool", "keydown", "l"], "#ffff00", (60, 60)),
+	"1": (83, 80, ["xdotool", "keydown", "Return"], "#0000ff", (60, 60)),
+	"4": (75, 70, ["xdotool", "keydown", "j"], "#ffc0cb", (60, 60)),
+	"Start": (40, 92, ["xdotool", "keydown", "v"], "#ffa500", (70, 30)),
+	"Select": (50, 92, ["xdotool", "keydown", "n"], "#800080", (70, 30)),
 	"Close_": (45, 5, [], "#808080", (70, 30))
 }
 

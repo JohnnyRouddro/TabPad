@@ -21,12 +21,13 @@ class newProcess (multiprocessing.Process):
 		self.min_x, self.max_x = None, None
 		self.min_y, self.max_y = None, None
 		self.res_x, self.res_y = None, None
+		self.keydown_list = []
 		self.devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
 		# print (self.devices)
 		self.inputsetup()
 
 	def run(self):
-		print ("Starting: " + self.name)
+		print ("\nStarting: " + self.name)
 		self.eventloop()
 
 	def inputsetup(self):
@@ -37,7 +38,6 @@ class newProcess (multiprocessing.Process):
 				input_node = d.fn
 				self.set_min_max_values(d)
 				self.no_device_found = False
-				
 
 		if self.no_device_found == True:
 			print ("No touch input detected.")
@@ -57,6 +57,7 @@ class newProcess (multiprocessing.Process):
 		y_abs_val = None
 		finger0_coords = None
 		finger1_coords = None
+		self.keydown_list = []
 		self.button_geometry = self.set_button_area()
 		self.current_orientation = "xrandr -q|grep -v dis|grep con|awk '{print $5}'"
 		self.current_orientation = self.get_bash_output(self.current_orientation)
@@ -90,7 +91,13 @@ class newProcess (multiprocessing.Process):
 			# 		print ("finger0: ", finger0_coords)
 			# 		print ("finger1: ", finger1_coords)
 
-			if lift_time != None and x_abs_val != None and y_abs_val != None:
+			if lift_time != None:
+				self.trigger_key_up()
+				touch_time = None
+
+			if touch_time != None and x_abs_val != None and y_abs_val != None:
+				self.trigger_key_up()
+				touch_time = None
 				self.compare_coords(*(self.convert_absolute_values((x_abs_val, y_abs_val))))
 
 	def percentconvertor(self, val, dimension):
@@ -109,10 +116,12 @@ class newProcess (multiprocessing.Process):
 		self.command_executor(l)
 
 	def command_executor(self, command_array):
+		self.keydown_list = []
 		if command_array:
 			for c in command_array:
 				if c:
 					subprocess.Popen(c, stdout=subprocess.PIPE)
+					self.keydown_list.append(c)
 
 	def circle_points(self, xcenter, ycenter, radius):
 		r = radius
@@ -195,10 +204,11 @@ class newProcess (multiprocessing.Process):
 		return output
 
 	def kill_process(self):
+		self.trigger_key_up()
 		for p in multiprocessing.active_children():
 			p.terminate()
 		self.terminate()
-		print ("Terminated: " + self.name)
+		print ("\nTerminated: " + self.name)
 
 	def set_min_max_values(self, device):
 		d = device.capabilities()
@@ -223,3 +233,8 @@ class newProcess (multiprocessing.Process):
 			self.y_end_pos = self.y_start_pos + v[4][1]
 			button_geometry[k] = (self.x_start_pos, self.x_end_pos, self.y_start_pos, self.y_end_pos)
 		return button_geometry
+
+	def trigger_key_up(self):
+		if self.keydown_list:
+			for i in self.keydown_list:
+				subprocess.Popen([i[0], "keyup", i[2]], stdout=subprocess.PIPE)
