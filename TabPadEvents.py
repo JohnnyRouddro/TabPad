@@ -35,10 +35,9 @@ class newProcess (multiprocessing.Process):
 			# print (d.name)
 			if (d.name == self.touch_panel):
 				input_node = d.fn
+				self.set_min_max_values(d)
 				self.no_device_found = False
-				self.min_x, self.max_x = d.capabilities()[3][0][1][1], d.capabilities()[3][0][1][2]
-				self.min_y, self.max_y = d.capabilities()[3][1][1][1], d.capabilities()[3][1][1][2]
-				self.res_x, self.res_y = d.capabilities()[3][0][1][-1], d.capabilities()[3][1][1][-1]
+				
 
 		if self.no_device_found == True:
 			print ("No touch input detected.")
@@ -202,3 +201,17 @@ class newProcess (multiprocessing.Process):
 		for p in multiprocessing.active_children():
 			p.terminate()
 		self.terminate()
+
+	def set_min_max_values(self, device):
+		d = device.capabilities()
+		for p in d:
+			if p == 3:
+				for v in d[p]:
+					if v[0] == 0 and ecodes.ABS[v[0]] == "ABS_X":
+						self.min_x, self.max_x = v[1][1], v[1][2]
+						self.res_x = v[1][-1]
+					if v[0] == 1 and ecodes.ABS[v[0]] == "ABS_Y":
+						self.min_y, self.max_y = v[1][1], v[1][2]
+						self.res_y = v[1][-1]
+		# print (self.min_x, self.max_x, self.res_x)
+		# print (self.min_y, self.max_y, self.res_y)
