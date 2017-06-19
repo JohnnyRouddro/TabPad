@@ -26,7 +26,7 @@ class newProcess (multiprocessing.Process):
 		self.inputsetup()
 
 	def run(self):
-		print ("Starting " + self.name)
+		print ("Starting: " + self.name)
 		self.eventloop()
 
 	def inputsetup(self):
@@ -198,6 +198,7 @@ class newProcess (multiprocessing.Process):
 		for p in multiprocessing.active_children():
 			p.terminate()
 		self.terminate()
+		print ("Terminated: " + self.name)
 
 	def set_min_max_values(self, device):
 		d = device.capabilities()

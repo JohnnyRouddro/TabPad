@@ -28,7 +28,8 @@ class TabPad(QWidget):
 		self.appicon = self.style().standardIcon(QStyle.SP_FileDialogListView)
 		self.screen_resolution = QApplication.desktop().screenGeometry()
 		self.screen_width, self.screen_height = self.screen_resolution.width(), self.screen_resolution.height()
-		self.eventProcess = newProcess(1, "Event Process 1", touch_panel, self.screen_width, self.screen_height)
+		self.process_counter = 1
+		self.eventProcess = newProcess(1, "Event Process " + str(self.process_counter), touch_panel, self.screen_width, self.screen_height)
 		self.eventProcess.start()
 		self.initUI()
 
@@ -118,7 +119,8 @@ class TabPad(QWidget):
 		self.show()
 		if self.eventProcess.is_alive():
 			self.eventProcess.kill_process()
-		self.eventProcess = newProcess(1, "Event Process 1", touch_panel, self.screen_width, self.screen_height)
+		self.process_counter += 1
+		self.eventProcess = newProcess(1, "Event Process " + str(self.process_counter), touch_panel, self.screen_width, self.screen_height)
 		self.eventProcess.start()
 		# self.activateWindow()
 
