@@ -57,6 +57,7 @@ class newProcess (multiprocessing.Process):
 		y_abs_val = None
 		finger0_coords = None
 		finger1_coords = None
+		self.button_geometry = self.set_button_area()
 		for ev in self.device.read_loop():
 			# print (evdev.util.categorize(ev))
 			if ev.code == 330 and ev.value == 1:
@@ -95,16 +96,12 @@ class newProcess (multiprocessing.Process):
 
 	def compare_coords(self, actual_x, actual_y):
 		l = []
-		button_area = self.circle_points(actual_x, actual_y, detection_radius)
-		for k, v in button_layout.items():
-			self.x_start_pos = self.percentconvertor(v[0], overlay_width)
-			self.x_end_pos = self.x_start_pos + v[4][0]
-			self.y_start_pos = self.percentconvertor(v[1], overlay_height)
-			self.y_end_pos = self.y_start_pos + v[4][1] 
-			for c in button_area:
-				if c[0] >= self.x_start_pos and c[0] <= self.x_end_pos:
-					if c[1] >= self.y_start_pos and c[1] <= self.y_end_pos:
-						l.append(v[2])
+		increased_touch_area = self.circle_points(actual_x, actual_y, detection_radius)
+		for k, v in self.button_geometry.items():
+			for c in increased_touch_area:
+				if c[0] >= v[0] and c[0] <= v[1]:
+					if c[1] >= v[2] and c[1] <= v[3]:
+						l.append(button_layout[k][2])
 		l = self.remove_duplicates_in_array(l)
 		self.command_executor(l)
 
@@ -215,3 +212,13 @@ class newProcess (multiprocessing.Process):
 						self.res_y = v[1][-1]
 		# print (self.min_x, self.max_x, self.res_x)
 		# print (self.min_y, self.max_y, self.res_y)
+
+	def set_button_area(self):
+		button_geometry = {}
+		for k, v in button_layout.items():
+			self.x_start_pos = self.percentconvertor(v[0], overlay_width)
+			self.x_end_pos = self.x_start_pos + v[4][0]
+			self.y_start_pos = self.percentconvertor(v[1], overlay_height)
+			self.y_end_pos = self.y_start_pos + v[4][1]
+			button_geometry[k] = (self.x_start_pos, self.x_end_pos, self.y_start_pos, self.y_end_pos)
+		return button_geometry
