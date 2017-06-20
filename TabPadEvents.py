@@ -97,13 +97,10 @@ class newProcess (multiprocessing.Process):
 			if lift_time != None:
 				self.trigger_key_up()
 				self.keyup_trigger_flag = True
-				# touch_time = None
 
-			if self.keyup_trigger_flag == False and x_abs_val != None and y_abs_val != None:
-				self.trigger_key_up()
-				self.keyup_trigger_flag = True
-				# touch_time = None
-				self.compare_coords(*(self.convert_absolute_values((x_abs_val, y_abs_val))))
+			if x_abs_val != None and y_abs_val != None:
+				if self.keyup_trigger_flag == False:
+					self.compare_coords(*(self.convert_absolute_values((x_abs_val, y_abs_val))))
 
 	def percentconvertor(self, val, dimension):
 		val = int(round((dimension * val)/100))
@@ -118,15 +115,19 @@ class newProcess (multiprocessing.Process):
 					if c[1] >= v[3] and c[1] <= v[4]:
 						l.append(button_layout[v[0]][2])
 		if l:
-			l = self.remove_duplicates_in_array(l)
+			if len(l) > 1:
+				l = self.remove_duplicates_in_array(l)
 			self.command_executor(l)
+		else:
+			self.trigger_key_up()
 
 	def command_executor(self, command_array):
-		self.keydown_list = []
+		# self.keydown_list = []
 		for c in command_array:
 			if c:
-				subprocess.Popen(c, stdout=subprocess.PIPE)
-				self.keydown_list.append(c)
+				if not c in self.keydown_list:
+					subprocess.Popen(c, stdout=subprocess.PIPE)
+					self.keydown_list.append(c)
 
 	def circle_points(self, xcenter, ycenter, radius):
 		r = radius
@@ -243,3 +244,4 @@ class newProcess (multiprocessing.Process):
 		if self.keydown_list:
 			for i in self.keydown_list:
 				subprocess.Popen([i[0], "keyup", i[2]], stdout=subprocess.PIPE)
+			self.keydown_list = []
