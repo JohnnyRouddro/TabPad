@@ -108,11 +108,11 @@ class newProcess (multiprocessing.Process):
 	def compare_coords(self, actual_x, actual_y):
 		l = []
 		increased_touch_area = self.circle_points(actual_x, actual_y, detection_radius)
-		for k, v in self.button_geometry.items():
+		for v in self.button_geometry:
 			for c in increased_touch_area:
-				if c[0] >= v[0] and c[0] <= v[1]:
-					if c[1] >= v[2] and c[1] <= v[3]:
-						l.append(button_layout[k][2])
+				if c[0] >= v[1] and c[0] <= v[2]:
+					if c[1] >= v[3] and c[1] <= v[4]:
+						l.append(button_layout[v[0]][2])
 		if l:
 			l = self.remove_duplicates_in_array(l)
 			self.command_executor(l)
@@ -226,13 +226,13 @@ class newProcess (multiprocessing.Process):
 		# print (self.min_y, self.max_y, self.res_y)
 
 	def set_button_area(self):
-		button_geometry = {}
+		button_geometry = []
 		for k, v in button_layout.items():
 			self.x_start_pos = self.percentconvertor(v[0], overlay_width)
 			self.x_end_pos = self.x_start_pos + v[4][0]
 			self.y_start_pos = self.percentconvertor(v[1], overlay_height)
 			self.y_end_pos = self.y_start_pos + v[4][1]
-			button_geometry[k] = (self.x_start_pos, self.x_end_pos, self.y_start_pos, self.y_end_pos)
+			button_geometry.append((k, self.x_start_pos, self.x_end_pos, self.y_start_pos, self.y_end_pos))
 		return button_geometry
 
 	def trigger_key_up(self):
