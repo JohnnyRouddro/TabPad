@@ -7,6 +7,8 @@ from evdev import ecodes
 from decimal import Decimal
 from TabPadConfig import *
 import multiprocessing
+from pymouse import PyMouse
+from pykeyboard import PyKeyboard
 
 class newProcess (multiprocessing.Process):
 	def __init__(self, processID, name, touch_panel, screen_width, screen_height):
@@ -63,6 +65,10 @@ class newProcess (multiprocessing.Process):
 		self.current_orientation = "xrandr -q|grep -v dis|grep con|awk '{print $5}'"
 		self.current_orientation = self.get_bash_output(self.current_orientation)
 		self.user_device_ctm = self.current_ctm()
+		self.xdotool = "xdotool"
+		self.py_mouse = PyMouse()
+		self.py_keyboard = PyKeyboard()
+		self.set_input_type()
 		
 		for ev in self.device.read_loop():
 			# print (evdev.util.categorize(ev))
@@ -83,16 +89,6 @@ class newProcess (multiprocessing.Process):
 			if ev.code == 54:
 				if ev.value > 0:
 					y_abs_val = ev.value
-
-			# if x_abs_val != None and y_abs_val != None and ev.code == 47:
-			# 	if ev.value == 0:
-			# 		finger0_coords = (x_abs_val, y_abs_val)
-			# 	if ev.value == 1:
-			# 		finger1_coords = (x_abs_val, y_abs_val)
-			# if (finger0_coords and finger1_coords) != None:
-			# 	if finger0_coords != finger1_coords:
-			# 		print ("finger0: ", finger0_coords)
-			# 		print ("finger1: ", finger1_coords)
 
 			if lift_time != None:
 				self.trigger_key_up()
@@ -117,16 +113,16 @@ class newProcess (multiprocessing.Process):
 		if l:
 			if len(l) > 1:
 				l = self.remove_duplicates_in_array(l)
-			self.command_executor(l)
+			self.command_executor(l, actual_x, actual_y)
 		else:
-			self.trigger_key_up()
+			self.trigger_key_up(actual_x, actual_y)
 
-	def command_executor(self, command_array):
+	def command_executor(self, command_array, x, y):
 		# self.keydown_list = []
 		for c in command_array:
 			if c:
 				if not c in self.keydown_list:
-					subprocess.Popen(c, stdout=subprocess.PIPE)
+					self.execute_keypress(c, "down", x, y)
 					self.keydown_list.append(c)
 
 	def circle_points(self, xcenter, ycenter, radius):
@@ -241,8 +237,49 @@ class newProcess (multiprocessing.Process):
 			button_geometry.append((k, self.x_start_pos, self.x_end_pos, self.y_start_pos, self.y_end_pos))
 		return button_geometry
 
-	def trigger_key_up(self):
+	def trigger_key_up(self, x=0, y=0):
 		if self.keydown_list:
 			for i in self.keydown_list:
-				subprocess.Popen([i[0], "keyup", i[2]], stdout=subprocess.PIPE)
+				self.execute_keypress(i, 'up', x, y)
 			self.keydown_list = []
+
+	def set_input_type(self):
+		if input_method == "xdotool":
+			self.keydown_string ="keydown"
+			self.keyup_string = "keyup"
+			self.mousedown_string = "mousedown"
+			self.mouseup_string = "mouseup"
+		if input_method == "pyuserinput":
+			self.keydown_string ="press_key"
+			self.keyup_string = "release_key"
+			self.mousedown_string = "press"
+			self.mouseup_string = "release"
+
+	def modify_keys(self, input_list, input_type):
+		if input_list[0] == "key" and input_type == "down":
+			input_list[0] = self.keydown_string
+		if input_list[0] == "key" and input_type == "up":
+			input_list[0] = self.keyup_string
+		if input_list[0] == "click" and input_type == "down":
+			input_list[0] = self.mousedown_string
+		if input_list[0] == "click" and input_type == "up":
+			input_list[0] = self.mouseup_string
+		return input_list
+
+	def execute_keypress(self, cmnd, keytype, x, y):
+		c = list(cmnd)
+		if c:
+			c = self.modify_keys(c, keytype)
+			if input_method == "xdotool":
+				c.insert(0, self.xdotool)
+				subprocess.Popen(c, stdout=subprocess.PIPE)
+			if input_method == "pyuserinput":
+				if c[0][-3:] == "key":
+					if c[0] == "press_key":
+						self.py_keyboard.press_key(c[1])
+					else:
+						self.py_keyboard.release_key(c[1])
+				if c[0] == "press":
+					self.py_mouse.press(x, y, int(c[1]))
+				if c[0] == "release":
+					self.py_mouse.release(x, y, int(c[1]))

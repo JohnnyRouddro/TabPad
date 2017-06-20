@@ -7,6 +7,11 @@
 # Make sure that you enter this value correctly or the app will fail immediately after launch.
 touch_panel = "GDIX1000:00 27C6:1002"
 
+# Available input methods. Choose that works best for you.
+# Possible values are "xdotool" and "pyuserinput"
+
+input_method = "xdotool"
+
 # Toggle this if you see weird, displaced or ghost touches.
 coord_hack = True
 
@@ -47,8 +52,8 @@ hide_on_close = True
 # E.g. 6,5 will postion a button horizontally at 6% of total width value.
 # And vertically at 5% of total height value.
 # The next value in square brackets defines command to be executed on button press.
-# Most of the time you will just need to change key combinations (third part in square brackets).
-# Xdotool also allows you to map mouse clicks, simulate repeating keys and so on. You can read more about xdotool on Internet.
+# Most of the time you will just need to change key combinations (second part in square brackets).
+# Xdotool and PyUserInfut also allows you to map mouse clicks, simulate repeating keys and so on. You can read more about them on Internet.
 # The next value defines button color (use only hex color values).
 # Last value in brackets define individual button sizes.
 # These values will only work if override_button_size is set to True.
@@ -60,21 +65,24 @@ hide_on_close = True
 # DO NOT change any label ending with underscore, e.g. "Close_"
 
 button_layout = {
-	"L1": (6, 5, ["xdotool", "keydown", "q"], "#ff0000", (70, 40)),
-	"L2": (14, 5, ["xdotool", "keydown", "w"], "#ff0000", (70, 40)),
-	"R1": (79, 5, ["xdotool", "keydown", "o"], "#ff0000", (70, 40)),
-	"R2": (87, 5, ["xdotool", "keydown", "p"], "#ff0000", (70, 40)),
-	"U": (12, 52, ["xdotool", "keydown", "Up"], "#ffffff", (40, 80)),
-	"R": (16, 67, ["xdotool", "keydown", "Right"], "#ffffff", (80, 40)),
-	"D": (12, 73, ["xdotool", "keydown", "Down"], "#ffffff", (40, 80)),
-	"L": (4, 67, ["xdotool", "keydown", "Left"], "#ffffff", (80, 40)),
-	"3": (83, 60, ["xdotool", "keydown", "i"], "#008000", (60, 60)),
-	"2": (91, 70, ["xdotool", "keydown", "l"], "#ffff00", (60, 60)),
-	"1": (83, 80, ["xdotool", "keydown", "Return"], "#0000ff", (60, 60)),
-	"4": (75, 70, ["xdotool", "keydown", "j"], "#ffc0cb", (60, 60)),
-	"Start": (40, 92, ["xdotool", "keydown", "v"], "#ffa500", (70, 30)),
-	"Select": (50, 92, ["xdotool", "keydown", "n"], "#800080", (70, 30)),
-	"Close_": (45, 5, [], "#808080", (70, 30))
+	"L1": (6, 5, ["key", "q"], "#ff0000", (70, 40)),
+	"L2": (14, 5, ["key", "w"], "#ff0000", (70, 40)),
+	"R1": (79, 5, ["key", "o"], "#ff0000", (70, 40)),
+	"R2": (87, 5, ["key", "p"], "#ff0000", (70, 40)),
+	"U": (12, 52, ["key", "Up"], "#ffffff", (40, 80)),
+	"R": (16, 67, ["key", "Right"], "#ffffff", (80, 40)),
+	"D": (12, 73, ["key", "Down"], "#ffffff", (40, 80)),
+	"L": (4, 67, ["key", "Left"], "#ffffff", (80, 40)),
+	"3": (83, 60, ["key", "i"], "#008000", (60, 60)),
+	"2": (91, 70, ["key", "l"], "#ffff00", (60, 60)),
+	"1": (83, 80, ["key", "Return"], "#0000ff", (60, 60)),
+	"4": (75, 70, ["key", "j"], "#ffc0cb", (60, 60)),
+	"Start": (45, 92, ["key", "v"], "#ffa500", (70, 30)),
+	"Select": (55, 92, ["key", "n"], "#800080", (70, 30)),
+	"LMB": (3, 26, ["click", "1"], "#800080", (60, 80)),
+	"RMB": (90, 26, ["click", "2"], "#800080", (60, 80)),
+	# "MMB": (45, 5, ["click", "3"], "#800080", (70, 30)),
+	"Close_": (35, 92, [], "#808080", (70, 30))
 }
 
 # ADVANCED OPTIONS
