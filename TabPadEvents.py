@@ -64,7 +64,7 @@ class newProcess (multiprocessing.Process):
 		self.user_device_ctm = self.current_ctm()
 		
 		for ev in self.device.read_loop():
-			print (evdev.util.categorize(ev))
+			# print (evdev.util.categorize(ev))
 			if ev.code == 330 and ev.value == 1:
 				touch_time = Decimal(str(ev.sec) + "." + str(ev.usec))
 				# print touch_time
@@ -113,16 +113,16 @@ class newProcess (multiprocessing.Process):
 				if c[0] >= v[0] and c[0] <= v[1]:
 					if c[1] >= v[2] and c[1] <= v[3]:
 						l.append(button_layout[k][2])
-		l = self.remove_duplicates_in_array(l)
-		self.command_executor(l)
+		if l:
+			l = self.remove_duplicates_in_array(l)
+			self.command_executor(l)
 
 	def command_executor(self, command_array):
 		self.keydown_list = []
-		if command_array:
-			for c in command_array:
-				if c:
-					subprocess.Popen(c, stdout=subprocess.PIPE)
-					self.keydown_list.append(c)
+		for c in command_array:
+			if c:
+				subprocess.Popen(c, stdout=subprocess.PIPE)
+				self.keydown_list.append(c)
 
 	def circle_points(self, xcenter, ycenter, radius):
 		r = radius
