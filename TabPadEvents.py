@@ -57,6 +57,7 @@ class newProcess (multiprocessing.Process):
 		y_abs_val = None
 		finger0_coords = None
 		finger1_coords = None
+		self.keyup_trigger_flag = False
 		self.keydown_list = []
 		self.button_geometry = self.set_button_area()
 		self.current_orientation = "xrandr -q|grep -v dis|grep con|awk '{print $5}'"
@@ -67,6 +68,7 @@ class newProcess (multiprocessing.Process):
 			# print (evdev.util.categorize(ev))
 			if ev.code == 330 and ev.value == 1:
 				touch_time = Decimal(str(ev.sec) + "." + str(ev.usec))
+				self.keyup_trigger_flag = False
 				# print touch_time
 
 			if ev.code == 330 and ev.value == 0:
@@ -94,11 +96,13 @@ class newProcess (multiprocessing.Process):
 
 			if lift_time != None:
 				self.trigger_key_up()
-				touch_time = None
+				self.keyup_trigger_flag = True
+				# touch_time = None
 
-			if touch_time != None and x_abs_val != None and y_abs_val != None:
+			if self.keyup_trigger_flag == False and x_abs_val != None and y_abs_val != None:
 				self.trigger_key_up()
-				touch_time = None
+				self.keyup_trigger_flag = True
+				# touch_time = None
 				self.compare_coords(*(self.convert_absolute_values((x_abs_val, y_abs_val))))
 
 	def percentconvertor(self, val, dimension):
