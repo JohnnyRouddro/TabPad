@@ -4,7 +4,6 @@ import subprocess
 import time
 import evdev
 from evdev import ecodes
-from decimal import Decimal
 from TabPadConfig import *
 import multiprocessing
 from pymouse import PyMouse
@@ -73,13 +72,11 @@ class newProcess (multiprocessing.Process):
 		for ev in self.device.read_loop():
 			# print (evdev.util.categorize(ev))
 			if ev.code == 330 and ev.value == 1:
-				touch_time = Decimal(str(ev.sec) + "." + str(ev.usec))
+				touch_time = ev.timestamp()
 				self.keyup_trigger_flag = False
-				# print touch_time
 
 			if ev.code == 330 and ev.value == 0:
-				lift_time = Decimal(str(ev.sec) + "." + str(ev.usec))
-				# print lift_time
+				lift_time = ev.timestamp()
 			else:
 				lift_time = None
 
