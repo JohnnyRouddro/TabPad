@@ -61,9 +61,7 @@ class newProcess (multiprocessing.Process):
 		self.keyup_trigger_flag = False
 		self.keydown_list = []
 		self.button_geometry = self.set_button_area()
-		self.current_orientation = "xrandr -q|grep -v dis|grep con|awk '{print $5}'"
-		self.current_orientation = self.get_bash_output(self.current_orientation)
-		self.user_device_ctm = self.current_ctm()
+		self.current_orientation = self.device_orientation()
 		self.xdotool = "xdotool"
 		self.py_mouse = PyMouse()
 		self.py_keyboard = PyKeyboard()
@@ -142,16 +140,16 @@ class newProcess (multiprocessing.Process):
 
 	def convert_absolute_values(self, value):
 		if coord_hack:
-			if self.user_device_ctm == [1, 0, 0, 0, 1, 0, 0, 0, 1] or self.current_orientation == "normal":
+			if self.current_orientation == "normal":
 				xc = value[0]
 				yc = value[1]
-			elif self.user_device_ctm == [-1, 0, 1, 0, -1, 1, 0, 0, 1] or self.current_orientation == "inverted":
+			elif self.current_orientation == "inverted":
 				xc = abs(self.max_x - value[0])
 				yc = abs(self.max_y - value[1])
-			elif self.user_device_ctm == [0, -1, 1, 1, 0, 0, 0, 0, 1] or self.current_orientation == "left":
+			elif self.current_orientation == "left":
 				xc = abs(self.max_x - value[1])
 				yc = value[0]
-			elif self.user_device_ctm == [0, 1, 0, -1, 0, 1, 0, 0, 1] or self.current_orientation == "right":
+			elif self.current_orientation == "right":
 				xc = value[1]
 				yc = abs(self.max_y - value[0])
 			else:
@@ -177,13 +175,25 @@ class newProcess (multiprocessing.Process):
 		# print (xc, yc)
 		return (xc, yc)
 
-	def current_ctm(self):
+	def device_orientation(self):
 		c = "echo $(xinput list-props '" + self.touch_panel \
 		+ "'| grep 'Coordinate Transformation Matrix' | sed 's/.*://')"
-		output = self.get_bash_output(c)
-		output = output.split(", ")
-		output = [int(float(i)) for i in output]
-		return output
+		ctm = self.get_bash_output(c)
+		ctm = ctm.split(", ")
+		ctm = [int(float(i)) for i in ctm]
+
+		orientation = "xrandr -q|grep -v dis|grep con|awk '{print $5}'"
+		orientation = self.get_bash_output(orientation)
+
+		if ctm == [1, 0, 0, 0, 1, 0, 0, 0, 1] or orientation == "normal":
+			c = "normal"
+		if ctm == [-1, 0, 1, 0, -1, 1, 0, 0, 1] or orientation == "inverted":
+			c = "inverted"
+		if ctm == [0, -1, 1, 1, 0, 0, 0, 0, 1] or orientation == "left":
+			c = "left"
+		if ctm == [0, 1, 0, -1, 0, 1, 0, 0, 1] or orientation == "right":
+			c = "right"
+		return c
 
 	def convert_coords_asper_ctm(self, coords, matrix):
 		x = coords[0]
