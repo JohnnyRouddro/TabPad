@@ -89,5 +89,4 @@ button_layout = {
 # DO NOT change them unless you know what you are doing.
 
 detection_radius = 12
-coord_adjustment_factor = 3
-detection_radius = coord_adjustment_factor + detection_radius
+coord_adjustment_factor = 2

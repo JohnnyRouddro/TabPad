@@ -175,7 +175,6 @@ class newProcess (multiprocessing.Process):
 			if yc < 0:
 				yc = 0
 		# print (xc, yc)
-		xc, yc = xc + coord_adjustment_factor, yc + coord_adjustment_factor
 		return (xc, yc)
 
 	def current_ctm(self):
@@ -227,10 +226,10 @@ class newProcess (multiprocessing.Process):
 	def set_button_area(self):
 		button_geometry = []
 		for k, v in button_layout.items():
-			self.x_start_pos = self.percentconvertor(v[0], overlay_width)
-			self.x_end_pos = self.x_start_pos + v[4][0]
-			self.y_start_pos = self.percentconvertor(v[1], overlay_height)
-			self.y_end_pos = self.y_start_pos + v[4][1]
+			self.x_start_pos = self.percentconvertor(v[0], overlay_width) - coord_adjustment_factor
+			self.x_end_pos = self.x_start_pos + v[4][0] + (2 * coord_adjustment_factor)
+			self.y_start_pos = self.percentconvertor(v[1], overlay_height) - coord_adjustment_factor
+			self.y_end_pos = self.y_start_pos + v[4][1] + (2 * coord_adjustment_factor)
 			button_geometry.append((k, self.x_start_pos, self.x_end_pos, self.y_start_pos, self.y_end_pos))
 		return button_geometry
 
