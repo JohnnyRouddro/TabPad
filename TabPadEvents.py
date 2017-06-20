@@ -8,6 +8,7 @@ from TabPadConfig import *
 import multiprocessing
 from pymouse import PyMouse
 from pykeyboard import PyKeyboard
+import itertools
 
 class newProcess (multiprocessing.Process):
 	def __init__(self, processID, name, touch_panel, screen_width, screen_height):
@@ -135,7 +136,7 @@ class newProcess (multiprocessing.Process):
 
 	def remove_duplicates_in_array(self, array):
 		array = sorted(array)
-		a = [array[i] for i in range(len(array)) if i == 0 or array[i] != array[i-1]]
+		a = list(array for array, _ in itertools.groupby(array))
 		return a
 
 	def convert_absolute_values(self, value):
