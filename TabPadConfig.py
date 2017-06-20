@@ -7,7 +7,7 @@
 # Make sure that you enter this value correctly or the app will fail immediately after launch.
 touch_panel = "GDIX1000:00 27C6:1002"
 
-# Set this to True if you see weird, displaced or ghost touches.
+# Toggle this if you see weird, displaced or ghost touches.
 coord_hack = True
 
 # Enable or disable transparent background.
