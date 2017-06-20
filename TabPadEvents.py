@@ -182,6 +182,7 @@ class newProcess (multiprocessing.Process):
 			if yc < 0:
 				yc = 0
 		# print (xc, yc)
+		xc, yc = xc + coord_adjustment_factor, yc + coord_adjustment_factor
 		return (xc, yc)
 
 	def current_ctm(self):

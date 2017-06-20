@@ -35,7 +35,7 @@ button_border_radius = 10
 button_border_color = "#555555"
 
 # Opacity of buttons in percentage (100 is fully opaque).
-button_opacity = 100
+button_opacity = 50
 
 # Close button behavior (True minimizes to system tray, False closes the app)
 hide_on_close = True
@@ -80,5 +80,6 @@ button_layout = {
 # ADVANCED OPTIONS
 # DO NOT change them unless you know what you are doing.
 
-detection_radius = 10
-coord_adjustment_factor = 2
+detection_radius = 12
+coord_adjustment_factor = 3
+detection_radius = coord_adjustment_factor + detection_radius
