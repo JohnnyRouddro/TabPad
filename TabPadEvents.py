@@ -9,6 +9,7 @@ import multiprocessing
 from pymouse import PyMouse
 from pykeyboard import PyKeyboard
 import itertools
+from math import sqrt
 
 class newProcess (multiprocessing.Process):
 	def __init__(self, processID, name, touch_panel, screen_width, screen_height):
@@ -71,7 +72,6 @@ class newProcess (multiprocessing.Process):
 		for ev in self.device.read_loop():
 			# print (evdev.util.categorize(ev))
 			if ev.code == 330 and ev.value == 1:
-				touch_time = ev.timestamp()
 				self.keyup_trigger_flag = False
 
 			if ev.code == 330 and ev.value == 0:
@@ -100,18 +100,25 @@ class newProcess (multiprocessing.Process):
 
 	def compare_coords(self, actual_x, actual_y):
 		l = []
-		increased_touch_area = self.circle_points(actual_x, actual_y, detection_radius)
-		for v in self.button_geometry:
-			for c in increased_touch_area:
-				if c[0] >= v[1] and c[0] <= v[2]:
-					if c[1] >= v[3] and c[1] <= v[4]:
-						l.append(button_layout[v[0]][2])
+		main_button_flag = False
+		for v in self.button_geometry[0]:
+			if actual_x >= v[1] and actual_x <= v[2]:
+				if actual_y >= v[3] and actual_y <= v[4]:
+					l.append(button_layout[v[0]][2])
+					main_button_flag = True
+		if not main_button_flag:
+			for s in self.button_geometry[1]:
+				if actual_x >= s[2] and actual_x <= s[3]:
+					if actual_y >= s[4] and actual_y <= s[5]:
+						l.append(button_layout[s[0]][2])
+						l.append(button_layout[s[1]][2])
 		if l:
 			if len(l) > 1:
 				l = self.remove_duplicates_in_array(l)
 			self.command_executor(l, actual_x, actual_y)
 		else:
 			self.trigger_key_up(actual_x, actual_y)
+		main_button_flag = False
 
 	def command_executor(self, command_array, x, y):
 		# self.keydown_list = []
@@ -120,19 +127,6 @@ class newProcess (multiprocessing.Process):
 				if not c in self.keydown_list:
 					self.execute_keypress(c, "down", x, y)
 					self.keydown_list.append(c)
-
-	def circle_points(self, xcenter, ycenter, radius):
-		r = radius
-		xc = xcenter
-		yc = ycenter
-		points_array = []
-		for x in range(xc-r, xc+1):
-			for y in range(yc-r, yc+1):
-				if ((x - xc)*(x - xc) + (y - yc)*(y - yc)) <= r*r:
-					xcord = xc - (x - xc)
-					ycord = yc - (y - yc)
-					points_array.append((xcord, ycord))
-		return points_array
 
 	def remove_duplicates_in_array(self, array):
 		array = sorted(array)
@@ -196,17 +190,6 @@ class newProcess (multiprocessing.Process):
 			c = "right"
 		return c
 
-	def convert_coords_asper_ctm(self, coords, matrix):
-		x = coords[0]
-		y = coords[1]
-		a, b, c, d, e, f, g, h, i = matrix
-		w = (g*x + h*y + i)
-		x = (a*x + b*y + c) / w
-		y = (d*x + e*y + f) / w
-		x = int(round(x))
-		y = int(round(y))
-		return x, y	  
-
 	def get_bash_output(self, cmnd):
 		output = subprocess.Popen(cmnd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell = True ).communicate()
 		output = str(output[0]).strip("\\n'")
@@ -215,6 +198,7 @@ class newProcess (multiprocessing.Process):
 
 	def kill_process(self):
 		self.trigger_key_up()
+		time.sleep(1)
 		for p in multiprocessing.active_children():
 			p.terminate()
 		self.terminate()
@@ -236,13 +220,28 @@ class newProcess (multiprocessing.Process):
 
 	def set_button_area(self):
 		button_geometry = []
+		square_list = []
 		for k, v in button_layout.items():
 			self.x_start_pos = self.percentconvertor(v[0], overlay_width) - coord_adjustment_factor
 			self.x_end_pos = self.x_start_pos + v[4][0] + (2 * coord_adjustment_factor)
 			self.y_start_pos = self.percentconvertor(v[1], overlay_height) - coord_adjustment_factor
 			self.y_end_pos = self.y_start_pos + v[4][1] + (2 * coord_adjustment_factor)
 			button_geometry.append((k, self.x_start_pos, self.x_end_pos, self.y_start_pos, self.y_end_pos))
-		return button_geometry
+		
+		for a, b in itertools.combinations(button_geometry, 2):
+			xcenter1 = int(round((a[1] + a[2])/2))
+			ycenter1 = int(round((a[3] + a[4])/2))
+			xcenter2 = int(round((b[1] + b[2])/2))
+			ycenter2 = int(round((b[3] + b[4])/2))
+			circle1 = (xcenter1, ycenter1, circle_radius)
+			circle2 = (xcenter2, ycenter2, circle_radius)
+			center = self.circle_intersection_center(circle1, circle2)
+			if center != None:
+				k1 = a[0]
+				k2 = b[0]
+				square = self.square_coords(center[0], center[1], square_arm)
+				square_list.append((k1, k2, *square))
+		return button_geometry, square_list
 
 	def trigger_key_up(self, x=0, y=0):
 		if self.keydown_list:
@@ -290,3 +289,37 @@ class newProcess (multiprocessing.Process):
 					self.py_mouse.press(x, y, int(c[1]))
 				if c[0] == "release":
 					self.py_mouse.release(x, y, int(c[1]))
+
+	def circle_intersection_center(self, circle1, circle2):
+		x1,y1,r1 = circle1
+		x2,y2,r2 = circle2
+		dx,dy = x2-x1,y2-y1
+		d = sqrt(dx*dx+dy*dy)
+		if d > r1+r2:
+			# print ("No solutions, the circles are separate.")
+			return None
+		if d < abs(r1-r2):
+			# print ("No solutions, one circle is contained within the other")
+			return None
+		if d == 0 and r1 == r2:
+			# print ("Circles are coincident and there are an infinite number of solutions")
+			return None
+		a = (r1*r1-r2*r2+d*d)/(2*d)
+		h = sqrt(r1*r1-a*a)
+		xm = x1 + a*dx/d
+		ym = y1 + a*dy/d
+		xs1 = xm + h*dy/d
+		xs2 = xm - h*dy/d
+		ys1 = ym - h*dx/d
+		ys2 = ym + h*dx/d
+		centerx = int(round((xs1+xs2)/2))
+		centery = int(round((ys1+ys2)/2))
+		center = (centerx, centery)
+		return center
+
+	def square_coords(self, x, y, side):
+		x_start_pos = int(round(x - (side / 2)))
+		x_end_pos = int(round(x + (side / 2)))
+		y_start_pos = int(round(y - (side / 2)))
+		y_end_pos = int(round(y + (side / 2)))
+		return (x_start_pos, x_end_pos, y_start_pos, y_end_pos)

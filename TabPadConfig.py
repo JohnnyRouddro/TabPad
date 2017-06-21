@@ -10,7 +10,7 @@ touch_panel = "GDIX1000:00 27C6:1002"
 # Available input methods. Choose that works best for you.
 # Possible values are "xdotool" and "pyuserinput"
 
-input_method = "xdotool"
+input_method = "pyuserinput"
 
 # Toggle this if you see weird, displaced or ghost touches.
 coord_hack = True
@@ -75,7 +75,7 @@ button_layout = {
 	"L": (4, 67, ["key", "Left"], "#ffffff", (80, 40)),
 	"3": (83, 60, ["key", "i"], "#008000", (60, 60)),
 	"2": (91, 70, ["key", "l"], "#ffff00", (60, 60)),
-	"1": (83, 80, ["key", "Return"], "#0000ff", (60, 60)),
+	"1": (83, 80, ["key", "k"], "#0000ff", (60, 60)),
 	"4": (75, 70, ["key", "j"], "#ffc0cb", (60, 60)),
 	"Start": (45, 92, ["key", "v"], "#ffa500", (70, 30)),
 	"Select": (55, 92, ["key", "n"], "#800080", (70, 30)),
@@ -88,5 +88,6 @@ button_layout = {
 # ADVANCED OPTIONS
 # DO NOT change them unless you know what you are doing.
 
-detection_radius = 12
+circle_radius = 60
 coord_adjustment_factor = 2
+square_arm = 60
