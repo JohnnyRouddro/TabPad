@@ -9,14 +9,15 @@ import multiprocessing
 from pymouse import PyMouse
 from pykeyboard import PyKeyboard
 import itertools
-from math import sqrt
 
 class newProcess (multiprocessing.Process):
-	def __init__(self, processID, name, touch_panel, screen_width, screen_height):
+	def __init__(self, processID, name, touch_panel, screen_width, screen_height, dpad_coords, quadrant_list):
 		super(newProcess, self).__init__()
 		self.processID = processID
 		self.name = name
 		self.daemon = True
+		self.quadrant_list = quadrant_list
+		self.dpad_coords = dpad_coords
 		self.touch_panel = touch_panel
 		self.no_device_found = True
 		self.screen_width = screen_width
@@ -100,25 +101,43 @@ class newProcess (multiprocessing.Process):
 
 	def compare_coords(self, actual_x, actual_y):
 		l = []
-		main_button_flag = False
-		for v in self.button_geometry[0]:
+		for t in self.dpad_coords:
+			if actual_x >= t[1] and actual_x <= t[2]:
+				if actual_y >= t[3] and actual_y <= t[4]:
+					if t[0] == "U":
+						l.append(button_layout[t[0]][2])
+					if t[0] == "D":
+						l.append(button_layout[t[0]][2])
+					if t[0] == "L":
+						l.append(button_layout[t[0]][2])
+					if t[0] == "R":
+						l.append(button_layout[t[0]][2])
+		for t in self.quadrant_list:
+			if actual_x >= t[1] and actual_x <= t[2]:
+				if actual_y >= t[3] and actual_y <= t[4]:
+					if t[0] == "UR":
+						l.append(button_layout["U"][2])
+						l.append(button_layout["R"][2])
+					if t[0] == "DR":
+						l.append(button_layout["D"][2])
+						l.append(button_layout["R"][2])
+					if t[0] == "DL":
+						l.append(button_layout["D"][2])
+						l.append(button_layout["L"][2])
+					if t[0] == "UL":
+						l.append(button_layout["U"][2])
+						l.append(button_layout["L"][2])
+
+		for v in self.button_geometry:
 			if actual_x >= v[1] and actual_x <= v[2]:
 				if actual_y >= v[3] and actual_y <= v[4]:
 					l.append(button_layout[v[0]][2])
-					main_button_flag = True
-		if not main_button_flag:
-			for s in self.button_geometry[1]:
-				if actual_x >= s[2] and actual_x <= s[3]:
-					if actual_y >= s[4] and actual_y <= s[5]:
-						l.append(button_layout[s[0]][2])
-						l.append(button_layout[s[1]][2])
 		if l:
 			if len(l) > 1:
 				l = self.remove_duplicates_in_array(l)
 			self.command_executor(l, actual_x, actual_y)
 		else:
 			self.trigger_key_up(actual_x, actual_y)
-		main_button_flag = False
 
 	def command_executor(self, command_array, x, y):
 		# self.keydown_list = []
@@ -198,7 +217,7 @@ class newProcess (multiprocessing.Process):
 
 	def kill_process(self):
 		self.trigger_key_up()
-		time.sleep(1)
+		# time.sleep(1)
 		for p in multiprocessing.active_children():
 			p.terminate()
 		self.terminate()
@@ -220,28 +239,14 @@ class newProcess (multiprocessing.Process):
 
 	def set_button_area(self):
 		button_geometry = []
-		square_list = []
 		for k, v in button_layout.items():
-			self.x_start_pos = self.percentconvertor(v[0], overlay_width) - coord_adjustment_factor
-			self.x_end_pos = self.x_start_pos + v[4][0] + (2 * coord_adjustment_factor)
-			self.y_start_pos = self.percentconvertor(v[1], overlay_height) - coord_adjustment_factor
-			self.y_end_pos = self.y_start_pos + v[4][1] + (2 * coord_adjustment_factor)
-			button_geometry.append((k, self.x_start_pos, self.x_end_pos, self.y_start_pos, self.y_end_pos))
-		
-		for a, b in itertools.combinations(button_geometry, 2):
-			xcenter1 = int(round((a[1] + a[2])/2))
-			ycenter1 = int(round((a[3] + a[4])/2))
-			xcenter2 = int(round((b[1] + b[2])/2))
-			ycenter2 = int(round((b[3] + b[4])/2))
-			circle1 = (xcenter1, ycenter1, circle_radius)
-			circle2 = (xcenter2, ycenter2, circle_radius)
-			center = self.circle_intersection_center(circle1, circle2)
-			if center != None:
-				k1 = a[0]
-				k2 = b[0]
-				square = self.square_coords(center[0], center[1], square_arm)
-				square_list.append((k1, k2, *square))
-		return button_geometry, square_list
+			if v[0] != None or v[1] != None:
+				x_start_pos = self.percentconvertor(v[0], overlay_width) - coord_adjustment_factor
+				x_end_pos = x_start_pos + v[4][0] + (2 * coord_adjustment_factor)
+				y_start_pos = self.percentconvertor(v[1], overlay_height) - coord_adjustment_factor
+				y_end_pos = y_start_pos + v[4][1] + (2 * coord_adjustment_factor)
+				button_geometry.append((k, x_start_pos, x_end_pos, y_start_pos, y_end_pos))
+		return button_geometry
 
 	def trigger_key_up(self, x=0, y=0):
 		if self.keydown_list:
@@ -289,37 +294,3 @@ class newProcess (multiprocessing.Process):
 					self.py_mouse.press(x, y, int(c[1]))
 				if c[0] == "release":
 					self.py_mouse.release(x, y, int(c[1]))
-
-	def circle_intersection_center(self, circle1, circle2):
-		x1,y1,r1 = circle1
-		x2,y2,r2 = circle2
-		dx,dy = x2-x1,y2-y1
-		d = sqrt(dx*dx+dy*dy)
-		if d > r1+r2:
-			# print ("No solutions, the circles are separate.")
-			return None
-		if d < abs(r1-r2):
-			# print ("No solutions, one circle is contained within the other")
-			return None
-		if d == 0 and r1 == r2:
-			# print ("Circles are coincident and there are an infinite number of solutions")
-			return None
-		a = (r1*r1-r2*r2+d*d)/(2*d)
-		h = sqrt(r1*r1-a*a)
-		xm = x1 + a*dx/d
-		ym = y1 + a*dy/d
-		xs1 = xm + h*dy/d
-		xs2 = xm - h*dy/d
-		ys1 = ym - h*dx/d
-		ys2 = ym + h*dx/d
-		centerx = int(round((xs1+xs2)/2))
-		centery = int(round((ys1+ys2)/2))
-		center = (centerx, centery)
-		return center
-
-	def square_coords(self, x, y, side):
-		x_start_pos = int(round(x - (side / 2)))
-		x_end_pos = int(round(x + (side / 2)))
-		y_start_pos = int(round(y - (side / 2)))
-		y_end_pos = int(round(y + (side / 2)))
-		return (x_start_pos, x_end_pos, y_start_pos, y_end_pos)
