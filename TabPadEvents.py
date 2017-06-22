@@ -96,7 +96,7 @@ class newProcess (multiprocessing.Process):
 					self.compare_coords(*(self.convert_absolute_values((x_abs_val, y_abs_val))))
 
 	def percentconvertor(self, val, dimension):
-		val = int(round((dimension * val)/100))
+		val = self.roundify((dimension * val)/100)
 		return val
 
 	def compare_coords(self, actual_x, actual_y):
@@ -175,8 +175,8 @@ class newProcess (multiprocessing.Process):
 
 		xc = (xc - self.min_x) * self.screen_width / (self.max_x - self.min_x + 1)
 		yc = (yc - self.min_y) * self.screen_height / (self.max_y - self.min_y + 1)
-		xc = int(round(xc))
-		yc = int(round(yc))
+		xc = self.roundify(xc)
+		yc = self.roundify(yc)
 
 		if overlay_x_position < self.screen_width:
 			xc = xc - overlay_x_position
@@ -294,3 +294,6 @@ class newProcess (multiprocessing.Process):
 					self.py_mouse.press(x, y, int(c[1]))
 				if c[0] == "release":
 					self.py_mouse.release(x, y, int(c[1]))
+
+	def roundify(self, value):
+		return int(round(value))
