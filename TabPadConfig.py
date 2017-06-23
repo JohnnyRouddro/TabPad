@@ -34,7 +34,7 @@ button_height = 70
 override_button_size = True
 
 # Change dpad background frame properties
-dpad_background_border_size = 1
+dpad_background_border_size = 0
 dpad_background_border_radius = 10
 dpad_background_border_color = "#555555"
 dpad_background_opacity = 0
