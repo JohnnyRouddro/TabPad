@@ -21,7 +21,7 @@ Edit `TabPadConfig.py` file.
 # FAQ
 **<u>Why TabPad is Not Transparent?</u>**
 
-TabPad transparency depends on your compositing manager. If the compositing manager do not support transparency, you may see an opaque or a translucent background. TapPad works absolutely fine with Compiz and Kwin.
+TabPad transparency depends on your compositing manager. If the compositing manager do not support transparency, you may see an opaque or a translucent background. TapPad works absolutely fine with Compiz, Mutter and Kwin.
 
 **<u>Why TapPad layout is weird with overlapping buttons?</u>**
 
