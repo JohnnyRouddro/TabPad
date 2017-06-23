@@ -301,11 +301,10 @@ class newProcess (multiprocessing.Process):
 				c.insert(0, self.xdotool)
 				subprocess.Popen(c, stdout=subprocess.PIPE)
 			if input_method == "pyuserinput":
-				if c[0][-3:] == "key":
-					if c[0] == "press_key":
-						self.py_keyboard.press_key(c[1])
-					else:
-						self.py_keyboard.release_key(c[1])
+				if c[0] == "press_key":
+					self.py_keyboard.press_key(c[1])
+				if c[0] == "release_key":
+					self.py_keyboard.release_key(c[1])
 				if c[0] == "press":
 					self.py_mouse.press(x, y, int(c[1]))
 				if c[0] == "release":
