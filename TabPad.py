@@ -51,6 +51,8 @@ class TabPad(QWidget):
 		self.setWindowTitle('TabPad')
 		self.show()
 		self.start_process(self.process_counter)
+		if start_minimized:
+			self.hidepad()
 		# self.activateWindow()
 
 	def createandmove(self, label, xper, yper, command, color, btnsize):

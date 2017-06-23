@@ -58,6 +58,9 @@ button_opacity = 50
 # Close button behavior (True minimizes to system tray, False closes the app)
 hide_on_close = True
 
+# Start app minimized to system tray
+start_minimized = False
+
 # The dictionary below defines your gamepad layout and properties.
 # The first value on left is identification label for your button (inside square [] brackets).
 # The next two numbers on right are percentages defining position of a button.
