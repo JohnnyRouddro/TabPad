@@ -22,6 +22,7 @@ class newProcess (multiprocessing.Process):
 		self.no_device_found = True
 		self.screen_width = screen_width
 		self.screen_height= screen_height
+		self.set_overlay(overlay_x_position, overlay_y_position, overlay_width, overlay_height)
 		self.min_x, self.max_x = None, None
 		self.min_y, self.max_y = None, None
 		self.res_x, self.res_y = None, None
@@ -188,12 +189,12 @@ class newProcess (multiprocessing.Process):
 		xc = self.roundify(xc)
 		yc = self.roundify(yc)
 
-		if overlay_x_position < self.screen_width:
-			xc = xc - overlay_x_position
+		if self.overlay_x_position < self.screen_width:
+			xc = xc - self.overlay_x_position
 			if xc < 0:
 				xc = 0
-		if overlay_y_position < self.screen_height:
-			yc = yc - overlay_y_position
+		if self.overlay_y_position < self.screen_height:
+			yc = yc - self.overlay_y_position
 			if yc < 0:
 				yc = 0
 		# print (xc, yc)
@@ -251,9 +252,9 @@ class newProcess (multiprocessing.Process):
 		button_geometry = []
 		for k, v in button_layout.items():
 			if v[0] != None or v[1] != None:
-				x_start_pos = self.percentconvertor(v[0], overlay_width) - coord_adjustment_factor
+				x_start_pos = self.percentconvertor(v[0], self.overlay_width) - coord_adjustment_factor
 				x_end_pos = x_start_pos + v[4][0] + (2 * coord_adjustment_factor)
-				y_start_pos = self.percentconvertor(v[1], overlay_height) - coord_adjustment_factor
+				y_start_pos = self.percentconvertor(v[1], self.overlay_height) - coord_adjustment_factor
 				y_end_pos = y_start_pos + v[4][1] + (2 * coord_adjustment_factor)
 				button_geometry.append((k, x_start_pos, x_end_pos, y_start_pos, y_end_pos))
 		return button_geometry
@@ -309,6 +310,12 @@ class newProcess (multiprocessing.Process):
 					self.py_mouse.press(x, y, int(c[1]))
 				if c[0] == "release":
 					self.py_mouse.release(x, y, int(c[1]))
+
+	def set_overlay(self, x, y, w, h):
+		self.overlay_x_position = self.percentconvertor(x, self.screen_width)
+		self.overlay_y_position = self.percentconvertor(y, self.screen_height)
+		self.overlay_width = self.percentconvertor(w, self.screen_width)
+		self.overlay_height = self.percentconvertor(h, self.screen_height)
 
 	def roundify(self, value):
 		return int(round(value))

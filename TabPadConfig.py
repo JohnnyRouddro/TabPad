@@ -9,7 +9,6 @@ touch_panel = "GDIX1000:00 27C6:1002"
 
 # Available input methods. Choose that works best for you.
 # Possible values are "xdotool" and "pyuserinput"
-
 input_method = "pyuserinput"
 
 # Toggle this if you see weird, displaced or ghost touches.
@@ -19,15 +18,15 @@ coord_hack = True
 # It can be helpful in precise positioning of buttons.
 transparent_background = True
 
-# Position of overlay window in x and y coordinates
+# Position of overlay window in terms of percentages of your screen width and height.
 overlay_x_position = 0
-overlay_y_position = 300
+overlay_y_position = 40
 
-# Width and height of overlay window (DO NOT set these more than your max screen resolution)
-overlay_width = 1024
-overlay_height = 400
+# Size of overlay window in terms of percentages of your screen width and height.
+overlay_width = 100
+overlay_height = 50
 
-# Global width and height of buttons
+# Global width and height of buttons (in px)
 button_width = 70
 button_height = 70
 

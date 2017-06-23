@@ -30,6 +30,7 @@ class TabPad(QWidget):
 		self.appicon = self.style().standardIcon(QStyle.SP_FileDialogListView)
 		self.screen_resolution = QApplication.desktop().screenGeometry()
 		self.screen_width, self.screen_height = self.screen_resolution.width(), self.screen_resolution.height()
+		self.set_overlay(overlay_x_position, overlay_y_position, overlay_width, overlay_height)
 		self.process_counter = 1
 		self.dpad_coords = []
 		self.quadrant_list = []
@@ -48,7 +49,7 @@ class TabPad(QWidget):
 				else:
 					self.createandmove(k, *v)
 		self.systraysetup()
-		self.setGeometry(overlay_x_position, overlay_y_position, overlay_width, overlay_height)
+		self.setGeometry(self.overlay_x_position, self.overlay_y_position, self.overlay_width, self.overlay_height)
 		self.setWindowTitle('TabPad')
 		self.show()
 		self.start_process(self.process_counter)
@@ -67,14 +68,14 @@ class TabPad(QWidget):
 			qbtn.resize(*btnsize)
 		else:
 			qbtn.resize(button_width, button_height)
-		xpos, ypos = self.percentconvertor(xper, yper)
+		xpos = self.percentconvertor(xper, self.overlay_width)
+		ypos = self.percentconvertor(yper, self.overlay_height)
 		qbtn.move(xpos, ypos)
 		qbtn.setFocusPolicy(QtCore.Qt.NoFocus)
 
-	def percentconvertor(self, xpercent, ypercent):
-		xpos = int(round((overlay_width * xpercent)/100))
-		ypos = int(round((overlay_height * ypercent)/100))
-		return xpos, ypos
+	def percentconvertor(self, value, dimension):
+		value = self.roundify((value * dimension)/100)
+		return value
 
 	def keyhandler(self, lbl):
 		# print (lbl)
@@ -143,7 +144,8 @@ class TabPad(QWidget):
 		else:
 			dpad_frame.resize(button_width, button_height)
 
-		xpos, ypos = self.percentconvertor(xper, yper)
+		xpos = self.percentconvertor(xper, self.overlay_width)
+		ypos = self.percentconvertor(yper, self.overlay_height)
 		dpad_frame.move(xpos, ypos)
 		dpad_frame.setFocusPolicy(QtCore.Qt.NoFocus)
 
@@ -221,6 +223,12 @@ class TabPad(QWidget):
 			subprocess.Popen(["xdg-open", full_path])
 		except:
 			pass
+
+	def set_overlay(self, x, y, w, h):
+		self.overlay_x_position = self.percentconvertor(x, self.screen_width)
+		self.overlay_y_position = self.percentconvertor(y, self.screen_height)
+		self.overlay_width = self.percentconvertor(w, self.screen_width)
+		self.overlay_height = self.percentconvertor(h, self.screen_height)
 
 def main():
 	app = QApplication(sys.argv)
