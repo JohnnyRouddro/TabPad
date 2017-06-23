@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QPushButton
 from PyQt5.QtWidgets import QSystemTrayIcon, QStyle, QAction, QMenu
 from PyQt5.QtGui import QCursor, QIcon
 from TabPadEvents import *
+import os
 
 class TabPad(QWidget):
 	def __init__(self):
@@ -95,12 +96,15 @@ class TabPad(QWidget):
 		self.show_action = QAction("Show", self)
 		self.quit_action = QAction("Exit", self)
 		self.hide_action = QAction("Hide", self)
+		self.settings_action = QAction("Settings", self)
 		self.show_action.triggered.connect(self.showpad)
 		self.hide_action.triggered.connect(self.hidepad)
 		self.quit_action.triggered.connect(self.quithandler)
+		self.settings_action.triggered.connect(lambda: self.open_file("TabPadConfig.py"))
 		self.tray_menu = QMenu()
 		self.tray_menu.addAction(self.show_action)
 		self.tray_menu.addAction(self.hide_action)
+		self.tray_menu.addAction(self.settings_action)
 		self.tray_menu.addAction(self.quit_action)
 		self.tray_icon.setContextMenu(self.tray_menu)
 		self.tray_icon.show()
@@ -209,6 +213,14 @@ class TabPad(QWidget):
 		+ ";background-color:rgba(" + str(self.hextorgb(background_color)) + "," \
 		+ str(opacity) + '%)' + ";"
 		return stl
+
+	def open_file(self, file):
+		directory_path = os.getcwd()
+		full_path = os.path.join(directory_path, file)
+		try:
+			subprocess.Popen(["xdg-open", full_path])
+		except:
+			pass
 
 def main():
 	app = QApplication(sys.argv)
