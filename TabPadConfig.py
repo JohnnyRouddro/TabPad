@@ -83,7 +83,7 @@ hide_on_close = True
 
 button_layout = {}
 
-button_layout["dpad"] = (3, 55, [], "#ffffff", (170, 170))
+button_layout["dpad"] = (3, 35, [], "#ffffff", (250, 250))
 button_layout["L1"] = (6, 5, ["key", "q"], "#ff0000", (70, 40))
 button_layout["L2"] = (14, 5, ["key", "w"], "#ff0000", (70, 40))
 button_layout["R1"] = (79, 5, ["key", "o"], "#ff0000", (70, 40))
@@ -98,8 +98,8 @@ button_layout["1"] = (83, 80, ["key", "k"], "#0000ff", (60, 60))
 button_layout["4"] = (75, 70, ["key", "j"], "#ffc0cb", (60, 60))
 button_layout["Start"] = (45, 92, ["key", "v"], "#ffa500", (70, 30))
 button_layout["Select"] = (55, 92, ["key", "n"], "#800080", (70, 30))
-button_layout["LMB"] = (3, 26, ["key", "F1"], "#800080", (60, 80))
-button_layout["RMB"] = (90, 26, ["key", "F3"], "#800080", (60, 80))
+# button_layout["LMB"] = (3, 26, ["key", "F1"], "#800080", (60, 80))
+# button_layout["RMB"] = (90, 26, ["key", "F3"], "#800080", (60, 80))
 button_layout["Close"] = (35, 92, [], "#808080", (70, 30))
 
 # ADVANCED OPTIONS

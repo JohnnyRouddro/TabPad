@@ -46,7 +46,6 @@ class TabPad(QWidget):
 					self.create_dpad(k, *v)
 				else:
 					self.createandmove(k, *v)
-		
 		self.systraysetup()
 		self.setGeometry(overlay_x_position, overlay_y_position, overlay_width, overlay_height)
 		self.setWindowTitle('TabPad')

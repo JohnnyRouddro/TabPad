@@ -26,6 +26,7 @@ class newProcess (multiprocessing.Process):
 		self.min_y, self.max_y = None, None
 		self.res_x, self.res_y = None, None
 		self.keydown_list = []
+		self.dpad_keys = [button_layout['U'][2], button_layout['D'][2], button_layout['L'][2], button_layout['R'][2]]
 		self.devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
 		# print (self.devices)
 		self.inputsetup()
@@ -100,47 +101,56 @@ class newProcess (multiprocessing.Process):
 		return val
 
 	def compare_coords(self, actual_x, actual_y):
-		l = []
+		button_cmds = []
+		dpad_cmds = []
 		for t in self.dpad_coords:
 			if actual_x >= t[1] and actual_x <= t[2]:
 				if actual_y >= t[3] and actual_y <= t[4]:
 					if t[0] == "U":
-						l.append(button_layout[t[0]][2])
+						dpad_cmds.append(button_layout[t[0]][2])
 					if t[0] == "D":
-						l.append(button_layout[t[0]][2])
+						dpad_cmds.append(button_layout[t[0]][2])
 					if t[0] == "L":
-						l.append(button_layout[t[0]][2])
+						dpad_cmds.append(button_layout[t[0]][2])
 					if t[0] == "R":
-						l.append(button_layout[t[0]][2])
-		for t in self.quadrant_list:
-			if actual_x >= t[1] and actual_x <= t[2]:
-				if actual_y >= t[3] and actual_y <= t[4]:
-					if t[0] == "UR":
-						l.append(button_layout["U"][2])
-						l.append(button_layout["R"][2])
-					if t[0] == "DR":
-						l.append(button_layout["D"][2])
-						l.append(button_layout["R"][2])
-					if t[0] == "DL":
-						l.append(button_layout["D"][2])
-						l.append(button_layout["L"][2])
-					if t[0] == "UL":
-						l.append(button_layout["U"][2])
-						l.append(button_layout["L"][2])
+						dpad_cmds.append(button_layout[t[0]][2])
+		if not dpad_cmds:
+			for t in self.quadrant_list:
+				if actual_x >= t[1] and actual_x <= t[2]:
+					if actual_y >= t[3] and actual_y <= t[4]:
+						if t[0] == "UR":
+							dpad_cmds.append(button_layout["U"][2])
+							dpad_cmds.append(button_layout["R"][2])
+						if t[0] == "DR":
+							dpad_cmds.append(button_layout["D"][2])
+							dpad_cmds.append(button_layout["R"][2])
+						if t[0] == "DL":
+							dpad_cmds.append(button_layout["D"][2])
+							dpad_cmds.append(button_layout["L"][2])
+						if t[0] == "UL":
+							dpad_cmds.append(button_layout["U"][2])
+							dpad_cmds.append(button_layout["L"][2])
 
 		for v in self.button_geometry:
 			if actual_x >= v[1] and actual_x <= v[2]:
 				if actual_y >= v[3] and actual_y <= v[4]:
-					l.append(button_layout[v[0]][2])
-		if l:
-			if len(l) > 1:
-				l = self.remove_duplicates_in_array(l)
-			self.command_executor(l, actual_x, actual_y)
-		else:
+					button_cmds.append(button_layout[v[0]][2])
+
+		if not dpad_cmds and not button_cmds:
 			self.trigger_key_up(actual_x, actual_y)
+		else:
+			if dpad_cmds:
+				if len(dpad_cmds) > 1:
+					dpad_cmds = self.remove_duplicates_in_array(dpad_cmds)
+				keys = [j for j in self.dpad_keys if not j in dpad_cmds]
+				self.trigger_key_up(actual_x, actual_y, keys)
+				self.command_executor(dpad_cmds, actual_x, actual_y)
+			if button_cmds:
+				if len(button_cmds) > 1:
+					button_cmds = self.remove_duplicates_in_array(button_cmds)
+				self.command_executor(button_cmds, actual_x, actual_y)
 
 	def command_executor(self, command_array, x, y):
-		# self.keydown_list = []
 		for c in command_array:
 			if c:
 				if not c in self.keydown_list:
@@ -248,11 +258,17 @@ class newProcess (multiprocessing.Process):
 				button_geometry.append((k, x_start_pos, x_end_pos, y_start_pos, y_end_pos))
 		return button_geometry
 
-	def trigger_key_up(self, x=0, y=0):
-		if self.keydown_list:
-			for i in self.keydown_list:
-				self.execute_keypress(i, 'up', x, y)
-			self.keydown_list = []
+	def trigger_key_up(self, x=0, y=0, keys=[]):
+		if keys:
+			for k in keys:
+				self.execute_keypress(k, 'up', x, y)
+				if k in self.keydown_list:
+					self.keydown_list.remove(k)
+		else:
+			if self.keydown_list:
+				for i in self.keydown_list:
+					self.execute_keypress(i, 'up', x, y)
+				self.keydown_list = []
 
 	def set_input_type(self):
 		if input_method == "xdotool":
