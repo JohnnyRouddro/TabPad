@@ -11,7 +11,7 @@ import sys
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget, QApplication, QPushButton
 from PyQt5.QtWidgets import QSystemTrayIcon, QStyle, QAction, QMenu
-from PyQt5.QtGui import QCursor, QIcon, QRegion
+from PyQt5.QtGui import QCursor, QIcon
 from TabPadEvents import *
 import os
 
