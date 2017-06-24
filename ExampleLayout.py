@@ -26,23 +26,38 @@
 
 button_layout = {} ## DO NOT EDIT THIS
 
-button_layout["dpad"] = (3, 50, [], "#ffffff", (170, 170))
+button_layout["leftstick"] = (3, 30, [], "#ffffff", (150, 150))
+button_layout["leftstick_U"] = (None, None, ["key", "Up"], "#ffffff", (40, 80))
+button_layout["leftstick_R"] = (None, None, ["key", "Right"], "#ffffff", (80, 40))
+button_layout["leftstick_D"] = (None, None, ["key", "Down"], "#ffffff", (40, 80))
+button_layout["leftstick_L"] = (None, None, ["key", "Left"], "#ffffff", (80, 40))
+
+button_layout["rightstick"] = (72, 60, [], "#ffffff", (150, 150))
+button_layout["rightstick_U"] = (None, None, ["key", "Up"], "#ffffff", (40, 80))
+button_layout["rightstick_R"] = (None, None, ["key", "Right"], "#ffffff", (80, 40))
+button_layout["rightstick_D"] = (None, None, ["key", "Down"], "#ffffff", (40, 80))
+button_layout["rightstick_L"] = (None, None, ["key", "Left"], "#ffffff", (80, 40))
+
 button_layout["L1"] = (6, 5, ["key", "Return"], "#ff0000", (70, 40))
-button_layout["L2"] = (6, 18, ["key", "w"], "#ff0000", (70, 40))
-button_layout["R1"] = (87, 5, ["key", "o"], "#ff0000", (70, 40))
-button_layout["R2"] = (87, 18, ["key", "p"], "#ff0000", (70, 40))
+button_layout["L2"] = (14, 5, ["key", "w"], "#ff0000", (70, 40))
+button_layout["R1"] = (79, 5, ["key", "o"], "#ff0000", (70, 40))
+button_layout["R2"] = (87, 5, ["key", "p"], "#ff0000", (70, 40))
+
+button_layout["dpad"] = (15, 61, [], "#ffffff", (150, 150))
 button_layout["U"] = (None, None, ["key", "Up"], "#ffffff", (40, 80))
 button_layout["R"] = (None, None, ["key", "Right"], "#ffffff", (80, 40))
 button_layout["D"] = (None, None, ["key", "Down"], "#ffffff", (40, 80))
 button_layout["L"] = (None, None, ["key", "Left"], "#ffffff", (80, 40))
-button_layout["3"] = (92, 60, ["key", "i"], "#008000", (60, 60))
-button_layout["2"] = (84, 60, ["key", "l"], "#ffff00", (60, 60))
-button_layout["1"] = (76, 60, ["key", "k"], "#0000ff", (60, 60))
-button_layout["4"] = (92, 80, ["key", "j"], "#ffc0cb", (60, 60))
-button_layout["5"] = (84, 80, ["key", "j"], "#ffc0cb", (60, 60))
-button_layout["6"] = (76, 80, ["key", "j"], "#ffc0cb", (60, 60))
-button_layout["Start"] = (20, 92, ["key", "v"], "#ffa500", (70, 30))
-button_layout["Select"] = (65, 92, ["key", "n"], "#800080", (70, 30))
-# button_layout["LMB"] = (3, 26, ["key", "F1"], "#800080", (60, 80))
-# button_layout["RMB"] = (90, 26, ["key", "F3"], "#800080", (60, 80))
-button_layout["Close"] = (43, 92, [], "#808080", (70, 30))
+
+button_layout["3"] = (83, 22, ["key", "i"], "#008000", (60, 60))
+button_layout["2"] = (91, 32, ["key", "l"], "#ffff00", (60, 60))
+button_layout["1"] = (83, 42, ["key", "k"], "#0000ff", (60, 60))
+button_layout["4"] = (75, 32, ["key", "j"], "#ffc0cb", (60, 60))
+
+button_layout["Start"] = (45, 92, ["key", "v"], "#ffa500", (70, 30))
+button_layout["Select"] = (55, 92, ["key", "n"], "#800080", (70, 30))
+
+# button_layout["LMB"] = (3, 26, ["click", "1"], "#800080", (60, 80))
+# button_layout["RMB"] = (90, 26, ["click", "2"], "#800080", (60, 80))
+
+button_layout["Close"] = (35, 92, [], "#808080", (70, 30))

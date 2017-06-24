@@ -11,13 +11,17 @@ from pykeyboard import PyKeyboard
 import itertools
 
 class newProcess (multiprocessing.Process):
-	def __init__(self, processID, name, touch_panel, screen_width, screen_height, dpad_coords, quadrant_list):
+	def __init__(self, processID, name, touch_panel, screen_width, \
+		screen_height, dpad_coords, quadrant_list, leftstick_deadzone_coords, \
+		rightstick_deadzone_coords):
 		super(newProcess, self).__init__()
 		self.processID = processID
 		self.name = name
 		self.daemon = True
 		self.quadrant_list = quadrant_list
 		self.dpad_coords = dpad_coords
+		self.leftstick_deadzone_coords = leftstick_deadzone_coords
+		self.rightstick_deadzone_coords = rightstick_deadzone_coords
 		self.touch_panel = touch_panel
 		self.no_device_found = True
 		self.screen_width = screen_width
@@ -28,6 +32,8 @@ class newProcess (multiprocessing.Process):
 		self.res_x, self.res_y = None, None
 		self.keydown_list = []
 		self.dpad_keys = [button_layout['U'][2], button_layout['D'][2], button_layout['L'][2], button_layout['R'][2]]
+		self.leftstick_keys = [button_layout['leftstick_U'][2], button_layout['leftstick_D'][2], button_layout['leftstick_L'][2], button_layout['leftstick_R'][2]]
+		self.rightstick_keys = [button_layout['rightstick_U'][2], button_layout['rightstick_D'][2], button_layout['rightstick_L'][2], button_layout['rightstick_R'][2]]
 		self.devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
 		# print (self.devices)
 		self.inputsetup()
@@ -104,6 +110,8 @@ class newProcess (multiprocessing.Process):
 	def compare_coords(self, actual_x, actual_y):
 		button_cmds = []
 		dpad_cmds = []
+		leftstick_cmds = []
+		rightstick_cmds = []
 		for t in self.dpad_coords:
 			if actual_x >= t[1] and actual_x <= t[2]:
 				if actual_y >= t[3] and actual_y <= t[4]:
@@ -135,9 +143,24 @@ class newProcess (multiprocessing.Process):
 		for v in self.button_geometry:
 			if actual_x >= v[1] and actual_x <= v[2]:
 				if actual_y >= v[3] and actual_y <= v[4]:
-					button_cmds.append(button_layout[v[0]][2])
+					if v[0] == "leftstick":
+						if self.leftstick_deadzone_coords:
+							if actual_x >= self.leftstick_deadzone_coords[0] and actual_x <= self.leftstick_deadzone_coords[1] and \
+								actual_y >= self.leftstick_deadzone_coords[2] and actual_y <= self.leftstick_deadzone_coords[3]:
+									pass
+							else:
+								self.move_sticks(actual_x, actual_y, v, leftstick_cmds)
+					elif v[0] == "rightstick":
+						if self.rightstick_deadzone_coords:
+							if actual_x >= self.rightstick_deadzone_coords[0] and actual_x <= self.rightstick_deadzone_coords[1] and \
+								actual_y >= self.rightstick_deadzone_coords[2] and actual_y <= self.rightstick_deadzone_coords[3]:
+									pass
+							else:
+								self.move_sticks(actual_x, actual_y, v, rightstick_cmds)
+					else:
+						button_cmds.append(button_layout[v[0]][2])
 
-		if not dpad_cmds and not button_cmds:
+		if not dpad_cmds and not button_cmds and not leftstick_cmds and not rightstick_cmds:
 			self.trigger_key_up(actual_x, actual_y)
 		else:
 			if dpad_cmds:
@@ -146,6 +169,18 @@ class newProcess (multiprocessing.Process):
 				keys = [j for j in self.dpad_keys if not j in dpad_cmds]
 				self.trigger_key_up(actual_x, actual_y, keys)
 				self.command_executor(dpad_cmds, actual_x, actual_y)
+			if leftstick_cmds:
+				if len(leftstick_cmds) > 1:
+					leftstick_cmds = self.remove_duplicates_in_array(leftstick_cmds)
+				keys = [j for j in self.dpad_keys if not j in leftstick_cmds]
+				self.trigger_key_up(actual_x, actual_y, keys)
+				self.command_executor(leftstick_cmds, actual_x, actual_y)
+			if rightstick_cmds:
+				if len(rightstick_cmds) > 1:
+					rightstick_cmds = self.remove_duplicates_in_array(rightstick_cmds)
+				keys = [j for j in self.dpad_keys if not j in rightstick_cmds]
+				self.trigger_key_up(actual_x, actual_y, keys)
+				self.command_executor(rightstick_cmds, actual_x, actual_y)
 			if button_cmds:
 				if len(button_cmds) > 1:
 					button_cmds = self.remove_duplicates_in_array(button_cmds)
@@ -319,3 +354,45 @@ class newProcess (multiprocessing.Process):
 
 	def roundify(self, value):
 		return int(round(value))
+
+	def move_sticks(self, x, y, v, cmds):
+		if v[0] == "leftstick":
+			keys = self.leftstick_keys
+		if v[0] == "rightstick":
+			keys = self.rightstick_keys
+		xc = (v[1]+v[2])/2
+		yc = (v[3]+v[4])/2
+		divisor = 16
+		xc_minus_mod = xc - xc / divisor
+		xc_plus_mod = xc + xc / divisor
+		yc_minus_mod = yc - yc / divisor
+		yc_plus_mod = yc + yc / divisor
+		if y > v[3] and y < yc_minus_mod:
+			if x > xc_minus_mod and x < xc_plus_mod:
+				cmds.append(keys[0])
+		if y > yc_plus_mod and y < v[4]:
+			if x > xc_minus_mod and x < xc_plus_mod:
+				cmds.append(keys[1])
+		if x > v[1] and x < xc_minus_mod:
+			if y > yc_minus_mod and y < yc_plus_mod:
+				cmds.append(keys[2])
+		if x > xc_plus_mod and x < v[2]:
+			if y > yc_minus_mod and y < yc_plus_mod:
+				cmds.append(keys[3])
+		if not cmds:
+			if x > v[1] and x < xc_minus_mod:
+				if y > v[3] and y < yc_minus_mod:
+					cmds.append(keys[0])
+					cmds.append(keys[2])
+			if x > xc_plus_mod and x < v[2]:
+				if y > v[3] and y < yc_minus_mod:
+					cmds.append(keys[0])
+					cmds.append(keys[3])
+			if x > xc_plus_mod and x < v[2]:
+				if y > yc_plus_mod and y < v[4]:
+					cmds.append(keys[1])
+					cmds.append(keys[3])
+			if x > v[1] and x < xc_minus_mod:
+				if y > yc_plus_mod and y < v[4]:
+					cmds.append(keys[1])
+					cmds.append(keys[2])

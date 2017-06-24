@@ -11,7 +11,7 @@ import sys
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget, QApplication, QPushButton
 from PyQt5.QtWidgets import QSystemTrayIcon, QStyle, QAction, QMenu
-from PyQt5.QtGui import QCursor, QIcon
+from PyQt5.QtGui import QCursor, QIcon, QRegion
 from TabPadEvents import *
 import os
 
@@ -34,6 +34,8 @@ class TabPad(QWidget):
 		self.process_counter = 1
 		self.dpad_coords = []
 		self.quadrant_list = []
+		self.leftstick_deadzone_coords = []
+		self.rightstick_deadzone_coords = []
 		self.initUI()
 
 	def initUI(self):
@@ -46,6 +48,10 @@ class TabPad(QWidget):
 			if v[0] != None or v[1] != None:
 				if k == "dpad":
 					self.create_dpad(k, *v)
+				elif k == "leftstick":
+					self.create_sticks(k, *v)
+				elif k == "rightstick":
+					self.create_sticks(k, *v)
 				else:
 					self.createandmove(k, *v)
 		self.systraysetup()
@@ -59,7 +65,7 @@ class TabPad(QWidget):
 
 	def createandmove(self, label, xper, yper, command, color, btnsize):
 		qbtn = QPushButton(label, self)
-		stl = self.set_style(button_border_size, button_border_radius, \
+		stl = self.get_style(button_border_size, button_border_radius, \
 			button_border_color, color, button_opacity)
 		qbtn.setStyleSheet(stl)
 		if label == "Hide" or label == "Close":
@@ -138,7 +144,7 @@ class TabPad(QWidget):
 
 	def create_dpad(self, label, xper, yper, command, color, btnsize):
 		dpad_frame = QWidget(self)
-		stl = self.set_style(dpad_background_border_size, dpad_background_border_radius, \
+		stl = self.get_style(dpad_background_border_size, dpad_background_border_radius, \
 			dpad_background_border_color, dpad_background_color, dpad_background_opacity)
 		dpad_frame.setStyleSheet(stl)
 
@@ -172,7 +178,7 @@ class TabPad(QWidget):
 		rightbutton.move(self.roundify(btnsize[0]*.6), self.roundify(btnsize[1]*.5-btnsize[1]*.125))
 		self.dpad_coords.append(self.dpad_geometry(dpad_frame, rightbutton))
 
-		stl = self.set_style(dpad_border_size, dpad_border_radius, \
+		stl = self.get_style(dpad_border_size, dpad_border_radius, \
 			dpad_border_color, dpad_color, button_opacity)
 		
 		upbutton.setStyleSheet(stl)
@@ -208,15 +214,21 @@ class TabPad(QWidget):
 		self.quadrant_list.append(ul_quadrant)
 
 	def start_process(self, counter):
-		self.eventProcess = newProcess(1, "Event Process " + str(counter), touch_panel, self.screen_width, self.screen_height, self.dpad_coords, self.quadrant_list)
+		self.eventProcess = newProcess(1, "Event Process " + str(counter), touch_panel, self.screen_width, \
+			self.screen_height, self.dpad_coords, self.quadrant_list, self.leftstick_deadzone_coords, \
+			self.rightstick_deadzone_coords)
 		self.eventProcess.start()
 
-	def set_style(self, border_size, border_radius, border_color, background_color, opacity):
-		stl = "background-color:rgba(0, 0, 0, 0%);border-width:" \
-		+ str(border_size)  + "px;border-style:solid;border-radius:" \
-		+ str(border_radius) + "px;border-color:" + str(border_color) \
-		+ ";background-color:rgba(" + str(self.hextorgb(background_color)) + "," \
+	def get_style(self, border_size, border_radius, border_color, background_color, opacity, extrastyle=None):
+		stl = "background-color:rgba(0, 0, 0, 0%);" \
+		+ "border-width:" + str(border_size)  + "px;" \
+		+ "border-style:solid;" \
+		+ "border-radius:" + str(border_radius) + "px;" \
+		+ "border-color:" + str(border_color) + ";" \
+		+ "background-color:rgba(" + str(self.hextorgb(background_color)) + "," \
 		+ str(opacity) + '%)' + ";"
+		if extrastyle != None:
+			stl += extrastyle
 		return stl
 
 	def open_file(self, file):
@@ -232,6 +244,81 @@ class TabPad(QWidget):
 		self.overlay_y_position = self.percentconvertor(y, self.screen_height)
 		self.overlay_width = self.percentconvertor(w, self.screen_width)
 		self.overlay_height = self.percentconvertor(h, self.screen_height)
+
+	def create_sticks(self, label, xper, yper, command, color, btnsize):
+		stick_widget = QWidget(self)
+		dz = QWidget(stick_widget)
+
+		if btnsize[0] != btnsize[1]:
+			if btnsize[0] > btnsize[1]:
+				btnsize = (btnsize[0], btnsize[0])
+			else:
+				btnsize = (btnsize[1], btnsize[1])
+
+		if button_width != button_height:
+			if button_width > button_height:
+				bs = (button_width, button_width)
+			elif button_height > button_width:
+				bs = (button_height, button_height)
+		if button_width == button_height:
+			bs = (button_width, button_height)
+
+		if override_button_size:
+			stick_widget.resize(*btnsize)
+			dz_size = self.percentconvertor(deadzone, btnsize[0])
+			dz.resize(dz_size, dz_size)
+			extrastyle = "max-width:" + str(btnsize[0]) + "px;" \
+				+ "max-height:" + str(btnsize[0]) + "px;" \
+				+ "min-width:" + str(btnsize[0]) + "px;" \
+				+ "min-height:" + str(btnsize[0]) + "px;"
+			stl = self.get_style(sticks_border_size, btnsize[0]/2, \
+				sticks_border_color, sticks_color, button_opacity, extrastyle)
+			stick_widget.setStyleSheet(stl)
+			extrastyle = "max-width:" + str(dz_size) + "px;" \
+				+ "max-height:" + str(dz_size) + "px;" \
+				+ "min-width:" + str(dz_size) + "px;" \
+				+ "min-height:" + str(dz_size) + "px;"
+			stl = self.get_style(0, dz_size/2, \
+				sticks_border_color, sticks_color, button_opacity, extrastyle)
+			dz.setStyleSheet(stl)
+		else:
+			stick_widget.resize(*bs)
+			dz_size = self.percentconvertor(deadzone, bs[0])
+			dz.resize(dz_size, dz_size)
+			extrastyle = "max-width:" + str(bs[0]) + "px;" \
+				+ "max-height:" + str(bs[0]) + "px;" \
+				+ "min-width:" + str(bs[0]) + "px;" \
+				+ "min-height:" + str(bs[0]) + "px;"
+			stl = self.get_style(sticks_border_size, bs[0]/2, \
+				sticks_border_color, sticks_color, button_opacity, extrastyle)
+			stick_widget.setStyleSheet(stl)
+			extrastyle = "max-width:" + str(dz_size) + "px;" \
+				+ "max-height:" + str(dz_size) + "px;" \
+				+ "min-width:" + str(dz_size) + "px;" \
+				+ "min-height:" + str(dz_size) + "px;"
+			stl = self.get_style(0, dz_size/2, \
+				sticks_border_color, sticks_color, button_opacity, extrastyle)
+			dz.setStyleSheet(stl)
+			
+		xpos = self.percentconvertor(xper, self.overlay_width)
+		ypos = self.percentconvertor(yper, self.overlay_height)
+		stick_widget.move(xpos, ypos)
+		dzx = self.roundify(stick_widget.width()/2 - dz.width()/2)
+		dzy = self.roundify(stick_widget.height()/2 - dz.height()/2)
+		dz.move(dzx, dzy)
+		if not show_deadzone:
+			dz.hide()
+		stick_widget.setFocusPolicy(QtCore.Qt.NoFocus)
+		dz.setFocusPolicy(QtCore.Qt.NoFocus)
+
+		dz_startx = stick_widget.x() + dz.x()
+		dz_endx = dz_startx + dz.width()
+		dz_starty = stick_widget.y() + dz.y()
+		dz_endy = dz_starty + dz.height()
+		if label == "leftstick":
+			self.leftstick_deadzone_coords = [dz_startx, dz_endx, dz_starty, dz_endy]
+		if label == "rightstick":
+			self.rightstick_deadzone_coords = [dz_startx, dz_endx, dz_starty, dz_endy]
 
 def main():
 	app = QApplication(sys.argv)

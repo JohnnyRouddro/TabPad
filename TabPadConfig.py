@@ -46,6 +46,11 @@ dpad_border_radius = 8
 dpad_border_color = "#555555"
 dpad_color = "#ffffff"
 
+# Change analog sticks properties
+sticks_border_size = 1
+sticks_border_color = "#555555"
+sticks_color = "#ffffff"
+
 # Change properties of all other buttons
 button_border_size = 1
 button_border_radius = 10
@@ -60,6 +65,13 @@ hide_on_close = True
 # Start app minimized to system tray
 start_minimized = False
 
+# Set analog sticks deadzone in terms of percentages of stick size.
+deadzone = 25
+
+# Toggle deadzone visibility.
+show_deadzone = True
+
+# Follow the instructions below to create new layout profile.
 # Make a copy of "DefaultLayout.py" file.
 # Change the name of new layout file (do not remove .py extension).
 # E.g. "MyLayout.py"
