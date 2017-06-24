@@ -77,7 +77,6 @@ class newProcess (multiprocessing.Process):
 		self.py_mouse = PyMouse()
 		self.py_keyboard = PyKeyboard()
 		self.set_input_type()
-		self.short_tap_flag = False
 		self.leftstick_array = []
 		self.rightstick_array = []
 		
@@ -106,13 +105,13 @@ class newProcess (multiprocessing.Process):
 
 			if x_abs_val != None and y_abs_val != None:
 				if self.keyup_trigger_flag == False:
-					self.compare_coords(*(self.convert_absolute_values((x_abs_val, y_abs_val))), touch_time, lift_time)
+					self.compare_coords(*(self.convert_absolute_values((x_abs_val, y_abs_val))))
 
 	def percentconvertor(self, val, dimension):
 		val = self.roundify((dimension * val)/100)
 		return val
 
-	def compare_coords(self, actual_x, actual_y, touchtime, lifttime):
+	def compare_coords(self, actual_x, actual_y):
 		button_cmds = []
 		dpad_cmds = []
 		leftstick_cmds = []
