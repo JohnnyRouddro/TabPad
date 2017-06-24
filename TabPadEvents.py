@@ -77,10 +77,14 @@ class newProcess (multiprocessing.Process):
 		self.py_mouse = PyMouse()
 		self.py_keyboard = PyKeyboard()
 		self.set_input_type()
+		self.short_tap_flag = False
+		self.leftstick_array = []
+		self.rightstick_array = []
 		
 		for ev in self.device.read_loop():
 			# print (evdev.util.categorize(ev))
 			if ev.code == 330 and ev.value == 1:
+				touch_time = ev.timestamp()
 				self.keyup_trigger_flag = False
 
 			if ev.code == 330 and ev.value == 0:
@@ -98,16 +102,17 @@ class newProcess (multiprocessing.Process):
 			if lift_time != None:
 				self.trigger_key_up()
 				self.keyup_trigger_flag = True
+				self.reset_stick_arrays()
 
 			if x_abs_val != None and y_abs_val != None:
 				if self.keyup_trigger_flag == False:
-					self.compare_coords(*(self.convert_absolute_values((x_abs_val, y_abs_val))))
+					self.compare_coords(*(self.convert_absolute_values((x_abs_val, y_abs_val))), touch_time, lift_time)
 
 	def percentconvertor(self, val, dimension):
 		val = self.roundify((dimension * val)/100)
 		return val
 
-	def compare_coords(self, actual_x, actual_y):
+	def compare_coords(self, actual_x, actual_y, touchtime, lifttime):
 		button_cmds = []
 		dpad_cmds = []
 		leftstick_cmds = []
@@ -145,18 +150,10 @@ class newProcess (multiprocessing.Process):
 				if actual_y >= v[3] and actual_y <= v[4]:
 					if v[0] == "leftstick":
 						if self.leftstick_deadzone_coords:
-							if actual_x >= self.leftstick_deadzone_coords[0] and actual_x <= self.leftstick_deadzone_coords[1] and \
-								actual_y >= self.leftstick_deadzone_coords[2] and actual_y <= self.leftstick_deadzone_coords[3]:
-									pass
-							else:
-								self.move_sticks(actual_x, actual_y, v, leftstick_cmds)
+								self.move_sticks(actual_x, actual_y, v, leftstick_cmds, button_cmds)
 					elif v[0] == "rightstick":
 						if self.rightstick_deadzone_coords:
-							if actual_x >= self.rightstick_deadzone_coords[0] and actual_x <= self.rightstick_deadzone_coords[1] and \
-								actual_y >= self.rightstick_deadzone_coords[2] and actual_y <= self.rightstick_deadzone_coords[3]:
-									pass
-							else:
-								self.move_sticks(actual_x, actual_y, v, rightstick_cmds)
+								self.move_sticks(actual_x, actual_y, v, rightstick_cmds, button_cmds)
 					else:
 						button_cmds.append(button_layout[v[0]][2])
 
@@ -294,13 +291,14 @@ class newProcess (multiprocessing.Process):
 				button_geometry.append((k, x_start_pos, x_end_pos, y_start_pos, y_end_pos))
 		return button_geometry
 
-	def trigger_key_up(self, x=0, y=0, keys=[]):
-		if keys:
-			for k in keys:
-				self.execute_keypress(k, 'up', x, y)
-				if k in self.keydown_list:
-					self.keydown_list.remove(k)
-		else:
+	def trigger_key_up(self, x=0, y=0, keys=None):
+		if keys != None:
+			if keys:
+				for k in keys:
+					self.execute_keypress(k, 'up', x, y)
+					if k in self.keydown_list:
+						self.keydown_list.remove(k)
+		if keys == None:
 			if self.keydown_list:
 				for i in self.keydown_list:
 					self.execute_keypress(i, 'up', x, y)
@@ -355,44 +353,88 @@ class newProcess (multiprocessing.Process):
 	def roundify(self, value):
 		return int(round(value))
 
-	def move_sticks(self, x, y, v, cmds):
+	def move_sticks(self, x, y, v, cmds, btncmds):
+		move = False
 		if v[0] == "leftstick":
 			keys = self.leftstick_keys
+			dz_startx = self.leftstick_deadzone_coords[0]
+			dz_endx = self.leftstick_deadzone_coords[1]
+			dz_starty = self.leftstick_deadzone_coords[2]
+			dz_endy = self.leftstick_deadzone_coords[3]
+			self.leftstick_array.append((x, y))
 		if v[0] == "rightstick":
 			keys = self.rightstick_keys
+			dz_startx = self.rightstick_deadzone_coords[0]
+			dz_endx = self.rightstick_deadzone_coords[1]
+			dz_starty = self.rightstick_deadzone_coords[2]
+			dz_endy = self.rightstick_deadzone_coords[3]
+			self.rightstick_array.append((x, y))
+
 		xc = (v[1]+v[2])/2
 		yc = (v[3]+v[4])/2
+		max_array_length = 20
+
+		if len(self.leftstick_array) > max_array_length:
+			firstx = self.leftstick_array[0][0]
+			firsty = self.leftstick_array[0][1]
+			absx = abs(xc - self.leftstick_array[-1][0])
+			absy = abs(yc - self.leftstick_array[-1][1])
+			if firstx > dz_startx and firstx < dz_endx:
+				if firsty > dz_starty and firsty < dz_endy:
+					if absx < dz_startx or absx > dz_endx:
+						if absy < dz_starty or absy > dz_endy:
+							move = True
+							del self.leftstick_array[1:-(max_array_length+1)]
+
+		if len(self.rightstick_array) > max_array_length:
+			firstx = self.rightstick_array[0][0]
+			firsty = self.rightstick_array[0][1]
+			absx = abs(xc - self.rightstick_array[-1][0])
+			absy = abs(yc - self.rightstick_array[-1][1])
+			if firstx > dz_startx and firstx < dz_endx:
+				if firsty > dz_starty and firsty < dz_endy:
+					if absx < dz_startx or absx > dz_endx:
+						if absy < dz_starty or absy > dz_endy:
+							move = True
+							del self.rightstick_array[1:-(max_array_length+1)]
+		
 		divisor = 16
 		xc_minus_mod = xc - xc / divisor
 		xc_plus_mod = xc + xc / divisor
 		yc_minus_mod = yc - yc / divisor
 		yc_plus_mod = yc + yc / divisor
-		if y > v[3] and y < yc_minus_mod:
-			if x > xc_minus_mod and x < xc_plus_mod:
-				cmds.append(keys[0])
-		if y > yc_plus_mod and y < v[4]:
-			if x > xc_minus_mod and x < xc_plus_mod:
-				cmds.append(keys[1])
-		if x > v[1] and x < xc_minus_mod:
-			if y > yc_minus_mod and y < yc_plus_mod:
-				cmds.append(keys[2])
-		if x > xc_plus_mod and x < v[2]:
-			if y > yc_minus_mod and y < yc_plus_mod:
-				cmds.append(keys[3])
-		if not cmds:
-			if x > v[1] and x < xc_minus_mod:
-				if y > v[3] and y < yc_minus_mod:
+
+		if move:
+			if y > v[3] and y < yc_minus_mod:
+				if x > xc_minus_mod and x < xc_plus_mod:
 					cmds.append(keys[0])
+			if y > yc_plus_mod and y < v[4]:
+				if x > xc_minus_mod and x < xc_plus_mod:
+					cmds.append(keys[1])
+			if x > v[1] and x < xc_minus_mod:
+				if y > yc_minus_mod and y < yc_plus_mod:
 					cmds.append(keys[2])
 			if x > xc_plus_mod and x < v[2]:
-				if y > v[3] and y < yc_minus_mod:
-					cmds.append(keys[0])
+				if y > yc_minus_mod and y < yc_plus_mod:
 					cmds.append(keys[3])
-			if x > xc_plus_mod and x < v[2]:
-				if y > yc_plus_mod and y < v[4]:
-					cmds.append(keys[1])
-					cmds.append(keys[3])
-			if x > v[1] and x < xc_minus_mod:
-				if y > yc_plus_mod and y < v[4]:
-					cmds.append(keys[1])
-					cmds.append(keys[2])
+			if not cmds:
+				if x > v[1] and x < xc_minus_mod:
+					if y > v[3] and y < yc_minus_mod:
+						cmds.append(keys[0])
+						cmds.append(keys[2])
+				if x > xc_plus_mod and x < v[2]:
+					if y > v[3] and y < yc_minus_mod:
+						cmds.append(keys[0])
+						cmds.append(keys[3])
+				if x > xc_plus_mod and x < v[2]:
+					if y > yc_plus_mod and y < v[4]:
+						cmds.append(keys[1])
+						cmds.append(keys[3])
+				if x > v[1] and x < xc_minus_mod:
+					if y > yc_plus_mod and y < v[4]:
+						cmds.append(keys[1])
+						cmds.append(keys[2])
+		
+	def reset_stick_arrays(self):
+		self.leftstick_array = []
+		self.rightstick_array = []
