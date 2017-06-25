@@ -69,7 +69,7 @@ class newProcess (multiprocessing.Process):
 		y_abs_val = None
 		finger0_coords = None
 		finger1_coords = None
-		self.keyup_trigger_flag = False
+		self.one_finger_lifted = False
 		self.keydown_list = []
 		self.button_geometry = self.set_button_area()
 		self.current_orientation = self.device_orientation()
@@ -84,7 +84,7 @@ class newProcess (multiprocessing.Process):
 			# print (evdev.util.categorize(ev))
 			if ev.code == 330 and ev.value == 1:
 				touch_time = ev.timestamp()
-				self.keyup_trigger_flag = False
+				self.one_finger_lifted = False
 
 			if ev.code == 330 and ev.value == 0:
 				lift_time = ev.timestamp()
@@ -98,13 +98,26 @@ class newProcess (multiprocessing.Process):
 				if ev.value > 0:
 					y_abs_val = ev.value
 
+			if x_abs_val != None and y_abs_val != None and ev.code == 47:
+				if ev.value == 0:
+					finger0_coords = (x_abs_val, y_abs_val)
+				if ev.value == 1:
+					finger1_coords = (x_abs_val, y_abs_val)
+			if finger0_coords != None and finger1_coords != None:
+				if finger0_coords != finger1_coords:
+					self.compare_coords(*(self.convert_absolute_values(finger0_coords)))
+					self.compare_coords(*(self.convert_absolute_values(finger0_coords)))
+					# print ("finger0: ", finger0_coords)
+					# print ("finger1: ", finger1_coords)
+					self.one_finger_lifted = True
+
 			if lift_time != None:
 				self.trigger_key_up()
-				self.keyup_trigger_flag = True
+				self.one_finger_lifted = True
 				self.reset_stick_arrays()
 
 			if x_abs_val != None and y_abs_val != None:
-				if self.keyup_trigger_flag == False:
+				if self.one_finger_lifted == False:
 					self.compare_coords(*(self.convert_absolute_values((x_abs_val, y_abs_val))))
 
 	def percentconvertor(self, val, dimension):
