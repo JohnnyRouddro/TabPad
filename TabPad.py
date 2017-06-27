@@ -11,7 +11,7 @@ import sys
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget, QApplication, QPushButton
 from PyQt5.QtWidgets import QSystemTrayIcon, QStyle, QAction, QMenu
-from PyQt5.QtGui import QCursor, QIcon
+from PyQt5.QtGui import QCursor, QIcon, QTouchEvent
 from TabPadEvents import *
 import os
 
@@ -25,7 +25,10 @@ class TabPad(QWidget):
 							QtCore.Qt.WindowDoesNotAcceptFocus)
 		if transparent_background:
 			self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-		self.setFocusPolicy(QtCore.Qt.NoFocus)	
+		self.setFocusPolicy(QtCore.Qt.NoFocus)
+		self.setAttribute(QtCore.Qt.WA_AcceptTouchEvents)
+		QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_SynthesizeTouchForUnhandledMouseEvents)	
+		QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_SynthesizeMouseForUnhandledTouchEvents)	
 		# self.appicon = QIcon.fromTheme("input-gaming")
 		self.appicon = self.style().standardIcon(QStyle.SP_FileDialogListView)
 		self.screen_resolution = QApplication.desktop().screenGeometry()
@@ -36,6 +39,7 @@ class TabPad(QWidget):
 		self.quadrant_list = []
 		self.leftstick_deadzone_coords = []
 		self.rightstick_deadzone_coords = []
+		self.installEventFilter(self)
 		self.initUI()
 
 	def initUI(self):
@@ -68,8 +72,6 @@ class TabPad(QWidget):
 		stl = self.get_style(button_border_size, button_border_radius, \
 			button_border_color, color, button_opacity)
 		qbtn.setStyleSheet(stl)
-		if label == "Hide" or label == "Close":
-			qbtn.clicked.connect(self.keyhandler(label))
 		if override_button_size:
 			qbtn.resize(*btnsize)
 		else:
@@ -84,13 +86,10 @@ class TabPad(QWidget):
 		return value
 
 	def keyhandler(self, lbl):
-		# print (lbl)
-		def processinput():
-			if hide_on_close and lbl == "Hide":
-				self.hidepad()
-			elif not hide_on_close and lbl == "Close":
-				self.quithandler()
-		return processinput
+		if hide_on_close and lbl == "Hide":
+			self.hidepad()
+		elif not hide_on_close and lbl == "Close":
+			self.quithandler()
 
 	def hextorgb(self, hexcolor):
 		h = hexcolor.strip('#')
@@ -247,6 +246,7 @@ class TabPad(QWidget):
 
 	def create_sticks(self, label, xper, yper, command, color, btnsize):
 		stick_widget = QWidget(self)
+		nub = QWidget(stick_widget)
 		dz = QWidget(stick_widget)
 
 		if btnsize[0] != btnsize[1]:
@@ -265,6 +265,8 @@ class TabPad(QWidget):
 
 		if override_button_size:
 			stick_widget.resize(*btnsize)
+			nub_width, nub_height = btnsize[0]/2, btnsize[1]/2
+			nub.resize(nub_width, nub_height)
 			dz_size = self.percentconvertor(deadzone, btnsize[0])
 			dz.resize(dz_size, dz_size)
 			extrastyle = "max-width:" + str(btnsize[0]) + "px;" \
@@ -274,6 +276,13 @@ class TabPad(QWidget):
 			stl = self.get_style(sticks_border_size, btnsize[0]/2, \
 				sticks_border_color, sticks_color, button_opacity, extrastyle)
 			stick_widget.setStyleSheet(stl)
+			extrastyle = "max-width:" + str(nub_width) + "px;" \
+				+ "max-height:" + str(nub_width) + "px;" \
+				+ "min-width:" + str(nub_width) + "px;" \
+				+ "min-height:" + str(nub_width) + "px;"
+			stl = self.get_style(sticks_border_size, nub_width/2, \
+				sticks_border_color, sticks_color, button_opacity, extrastyle)
+			nub.setStyleSheet(stl)
 			extrastyle = "max-width:" + str(dz_size) + "px;" \
 				+ "max-height:" + str(dz_size) + "px;" \
 				+ "min-width:" + str(dz_size) + "px;" \
@@ -283,6 +292,8 @@ class TabPad(QWidget):
 			dz.setStyleSheet(stl)
 		else:
 			stick_widget.resize(*bs)
+			nub_width, nub_height = bs[0]/2, bs[1]/2
+			nub.resize(nub_width, nub_height)
 			dz_size = self.percentconvertor(deadzone, bs[0])
 			dz.resize(dz_size, dz_size)
 			extrastyle = "max-width:" + str(bs[0]) + "px;" \
@@ -292,6 +303,13 @@ class TabPad(QWidget):
 			stl = self.get_style(sticks_border_size, bs[0]/2, \
 				sticks_border_color, sticks_color, button_opacity, extrastyle)
 			stick_widget.setStyleSheet(stl)
+			extrastyle = "max-width:" + str(nub_width) + "px;" \
+				+ "max-height:" + str(nub_width) + "px;" \
+				+ "min-width:" + str(nub_width) + "px;" \
+				+ "min-height:" + str(nub_width) + "px;"
+			stl = self.get_style(sticks_border_size, nub_width/2, \
+				sticks_border_color, sticks_color, button_opacity, extrastyle)
+			nub.setStyleSheet(stl)
 			extrastyle = "max-width:" + str(dz_size) + "px;" \
 				+ "max-height:" + str(dz_size) + "px;" \
 				+ "min-width:" + str(dz_size) + "px;" \
@@ -306,8 +324,13 @@ class TabPad(QWidget):
 		dzx = self.roundify(stick_widget.width()/2 - dz.width()/2)
 		dzy = self.roundify(stick_widget.height()/2 - dz.height()/2)
 		dz.move(dzx, dzy)
+		nubx = self.roundify(stick_widget.width()/2 - nub.width()/2)
+		nuby = self.roundify(stick_widget.height()/2 - nub.height()/2)
+		nub.move(nubx, nuby)
 		if not show_deadzone:
 			dz.hide()
+		if not show_analog_sticks_nub:
+			nub.hide()
 		stick_widget.setFocusPolicy(QtCore.Qt.NoFocus)
 		dz.setFocusPolicy(QtCore.Qt.NoFocus)
 
@@ -316,10 +339,84 @@ class TabPad(QWidget):
 		dz_starty = stick_widget.y() + dz.y()
 		dz_endy = dz_starty + dz.height()
 		if label == "leftstick":
+			stick_widget.setObjectName('leftstick')
+			dz.setObjectName('leftstick_deadzone')
+			nub.setObjectName('leftstick_nub')
 			self.leftstick_deadzone_coords = [dz_startx, dz_endx, dz_starty, dz_endy]
 		if label == "rightstick":
+			stick_widget.setObjectName('rightstick')
+			dz.setObjectName('rightstick_deadzone')
+			nub.setObjectName('rightstick_nub')
 			self.rightstick_deadzone_coords = [dz_startx, dz_endx, dz_starty, dz_endy]
 
+	def move_nubs(self, widget, name, event_pos):
+		nub = widget.findChildren(QWidget, name)
+		nub = nub[0]
+		widget_startx = widget.x()
+		widget_endx = widget_startx + widget.width()
+		widget_starty = widget.y()
+		widget_endy = widget_starty + widget.height()
+		widget_xc = self.roundify((widget_startx + widget_endx)/2)
+		widget_yc = self.roundify((widget_starty + widget_endy)/2)
+		r = widget.width()/2
+		eventx = event_pos.x()
+		eventy = event_pos.y()
+		if ((eventx - widget_xc)*(eventx - widget_xc) + (eventy - widget_yc)*(eventy - widget_yc)) < r*r:
+			pos = (event_pos - widget.pos())
+			pos = pos/2
+			nub.move(pos)
+
+	def recenter_nubs(self, widget, nub):
+		x = self.roundify(widget.width()/4)
+		y = self.roundify(widget.height()/4)
+		widget_startx = widget.x()
+		widget_endx = widget_startx + widget.width()
+		widget_center = (widget_startx + widget_endx)/2
+		nub_startx = widget.x() + nub.x()
+		nub_endx = nub_startx + nub.width()
+		nub_center = (nub_startx + nub_endx)/2
+		if widget_center != nub_center or abs(widget_center-nub_center) > 1:
+			nub.move(x,y)
+
+	def eventFilter(self, source, event):
+		if event.type() == QtCore.QEvent.TouchBegin \
+			or event.type() == QtCore.QEvent.TouchUpdate:
+			tp = event.touchPoints()
+			for t in tp:
+				event_pos = t.pos().toPoint()
+				sw = self.childAt(event_pos)
+				if hasattr(sw, 'text'):
+					text = sw.text()
+					if text == "Hide" or text == "Close":
+						print ('hahaha')
+						self.keyhandler(text)
+				if sw:
+					if sw.objectName() == "leftstick":
+						nub_name = 'leftstick_nub'
+						self.move_nubs(sw, nub_name, event_pos)
+					if sw.objectName() == "rightstick":
+						nub_name = 'rightstick_nub'
+						self.move_nubs(sw, nub_name, event_pos)
+			return True
+		if event.type() == QtCore.QEvent.TouchEnd:
+			nub = self.findChildren(QWidget, 'leftstick_nub')
+			nub = nub[0]
+			widget = nub.parentWidget()
+			self.recenter_nubs(widget, nub)
+			nub = self.findChildren(QWidget, 'rightstick_nub')
+			nub = nub[0]
+			widget = nub.parentWidget()
+			self.recenter_nubs(widget, nub)
+			return True
+		if event.type() == QtCore.QEvent.MouseMove:
+			print(source)
+			print('jjj')
+			return True
+		if event.type() == QtCore.Qt.LeftButton:
+			print('ooo')
+			return True
+		return False
+	
 def main():
 	app = QApplication(sys.argv)
 	ex = TabPad()

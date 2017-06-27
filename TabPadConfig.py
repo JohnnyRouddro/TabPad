@@ -71,6 +71,9 @@ deadzone = 25
 # Toggle deadzone visibility.
 show_deadzone = True
 
+# Toggle analog sticks nub visibility. If you observe lags while using analog sticks, set this to False.
+show_analog_sticks_nub = True
+
 # Follow the instructions below to create new layout profile.
 # Make a copy of "DefaultLayout.py" file.
 # Change the name of new layout file (do not remove .py extension).
