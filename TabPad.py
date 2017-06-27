@@ -388,7 +388,6 @@ class TabPad(QWidget):
 				if hasattr(sw, 'text'):
 					text = sw.text()
 					if text == "Hide" or text == "Close":
-						print ('hahaha')
 						self.keyhandler(text)
 				if sw:
 					if sw.objectName() == "leftstick":
