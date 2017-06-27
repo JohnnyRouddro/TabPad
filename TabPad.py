@@ -407,13 +407,6 @@ class TabPad(QWidget):
 			widget = nub.parentWidget()
 			self.recenter_nubs(widget, nub)
 			return True
-		if event.type() == QtCore.QEvent.MouseMove:
-			print(source)
-			print('jjj')
-			return True
-		if event.type() == QtCore.Qt.LeftButton:
-			print('ooo')
-			return True
 		return False
 	
 def main():
