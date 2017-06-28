@@ -3,8 +3,8 @@
 # The dictionary below defines your gamepad layout and properties.
 # The first value on left is identification label for your button (inside square [] brackets).
 # The next two numbers on right are percentages defining position of a button.
-# (Depends on overlay width and height mentioned above.)
-# E.g. 6,5 will postion a button horizontally at 6% of total width value.
+# (They depend on overlay width and height mentioned above.)
+# E.g. 6, 5 will postion a button horizontally at 6% of total width value.
 # And vertically at 5% of total height value.
 # The next value in square brackets defines command to be executed on button press.
 # Most of the time you will just need to change 'key' or 'click' type (second part in square brackets).
@@ -19,7 +19,7 @@
 # *********** DONT'S **********
 # DO NOT change any labels of existing button listings.
 # DO NOT change first two "None" values in a listing. These buttons are not drawn.
-# However, their other properties may still be used.
+# However, their other properties will still be used.
 # DO NOT change empty square [] braces.
 # Follow these strictly to prevent app crashes.
 # *********** DONT'S **********

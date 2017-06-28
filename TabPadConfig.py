@@ -2,27 +2,20 @@
 
 # Change Settings in this file
 
-# Delete what you see in quotes and enter your own touch panel name below.
-# It can be found out by running xinput command.
-# Make sure that you enter this value correctly or the app will fail immediately after launch.
-touch_panel = "GDIX1000:00 27C6:1002"
-
 # Available input methods. Choose that works best for you.
-# Possible values are "xdotool" and "pyuserinput"
+# Possible values are "xdotool" and "pyuserinput".
+# (pyuserinput has lower latency)
 input_method = "pyuserinput"
-
-# Toggle this if you see weird, displaced or ghost touches.
-coord_hack = True
 
 # Enable or disable transparent background.
 # It can be helpful in precise positioning of buttons.
 transparent_background = True
 
-# Position of overlay window in terms of percentages of your screen width and height.
+# Position of gamepad overlay window in terms of percentages of your screen width and height.
 overlay_x_position = 0
 overlay_y_position = 40
 
-# Size of overlay window in terms of percentages of your screen width and height.
+# Size of gamepad overlay window in terms of percentages of your screen width and height.
 overlay_width = 100
 overlay_height = 50
 
@@ -50,14 +43,18 @@ dpad_color = "#ffffff"
 sticks_border_size = 1
 sticks_border_color = "#555555"
 sticks_color = "#ffffff"
+sticks_nubs_color = "#ffffff"
+
+# Change deadzone properties
+deadzone_border_size = 1
+deadzone_border_color = "#ffffff"
+deadzone_color = "#ffffff"
 
 # Change properties of all other buttons
 button_border_size = 1
 button_border_radius = 10
 button_border_color = "#555555"
-
-# Opacity of buttons in percentage (100 is fully opaque).
-button_opacity = 50
+button_opacity = 50 # 100 is fully opaque
 
 # Close button behavior (True minimizes to system tray, False closes the app)
 hide_on_close = True
@@ -66,7 +63,7 @@ hide_on_close = True
 start_minimized = False
 
 # Set analog sticks deadzone in terms of percentages of stick size.
-deadzone = 25
+deadzone = 10
 
 # Toggle deadzone visibility.
 show_deadzone = True
@@ -89,5 +86,3 @@ from importlib import import_module
 file_name = current_layout_file[:-3]
 module = import_module(file_name)
 button_layout = module.button_layout
-
-coord_adjustment_factor = 2
