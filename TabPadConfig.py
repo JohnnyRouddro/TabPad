@@ -5,7 +5,7 @@
 # Available input methods. Choose that works best for you.
 # Possible values are "xdotool" and "pyuserinput".
 # (pyuserinput has lower latency)
-input_method = "xdotool"
+input_method = "pyuserinput"
 
 # Enable or disable transparent background.
 # It can be helpful in precise positioning of buttons.
