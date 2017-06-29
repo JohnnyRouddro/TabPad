@@ -5,7 +5,7 @@
 # Available input methods. Choose that works best for you.
 # Possible values are "xdotool" and "pyuserinput".
 # (pyuserinput has lower latency)
-input_method = "pyuserinput"
+input_method = "xdotool"
 
 # Enable or disable transparent background.
 # It can be helpful in precise positioning of buttons.
@@ -45,7 +45,7 @@ sticks_border_color = "#555555"
 sticks_color = "#ffffff"
 sticks_nubs_color = "#ffffff"
 
-# Change deadzone properties
+# Change analog sticks deadzone properties
 deadzone_border_size = 1
 deadzone_border_color = "#ffffff"
 deadzone_color = "#ffffff"
@@ -70,6 +70,9 @@ show_deadzone = True
 
 # Toggle analog sticks nub visibility. If you observe lags while using analog sticks, set this to False.
 show_analog_sticks_nub = True
+
+# Autorepeat/Turbo/Rapid-fire interval in seconds (e.g. 0.1, 0.5, 1, 2).
+autorepeat_interval = 0.1
 
 # Follow the instructions below to create new layout profile.
 # Make a copy of "DefaultLayout.py" file.

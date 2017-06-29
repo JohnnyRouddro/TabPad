@@ -10,9 +10,9 @@
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget, QApplication, QPushButton
 from PyQt5.QtWidgets import QSystemTrayIcon, QStyle, QAction, QMenu
-from PyQt5.QtGui import QCursor, QIcon
+from PyQt5.QtGui import QCursor, QIcon, QPaintEvent, QPainter, QPen
 from TabPadConfig import *
-import os, subprocess, sys
+import os, subprocess, sys, signal, time, multiprocessing
 from pymouse import PyMouse
 from pykeyboard import PyKeyboard
 
@@ -31,7 +31,6 @@ class TabPad(QWidget):
 		QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_SynthesizeTouchForUnhandledMouseEvents)	
 		QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_SynthesizeMouseForUnhandledTouchEvents)	
 		self.appicon = QIcon.fromTheme("input-gaming")
-		# self.appicon = self.style().standardIcon(QStyle.SP_FileDialogListView)
 		self.screen_resolution = QApplication.desktop().screenGeometry()
 		self.screen_width, self.screen_height = self.screen_resolution.width(), self.screen_resolution.height()
 		self.set_overlay(overlay_x_position, overlay_y_position, overlay_width, overlay_height)
@@ -40,12 +39,15 @@ class TabPad(QWidget):
 		self.leftstick_deadzone_coords = []
 		self.rightstick_deadzone_coords = []
 		self.keydown_list = []
+		self.autorepeat_keylist = []
 		self.dpad_keys = [button_layout['U'][2], button_layout['D'][2], button_layout['L'][2], button_layout['R'][2]]
 		self.leftstick_keys = [button_layout['leftstick_U'][2], button_layout['leftstick_D'][2], button_layout['leftstick_L'][2], button_layout['leftstick_R'][2]]
 		self.rightstick_keys = [button_layout['rightstick_U'][2], button_layout['rightstick_D'][2], button_layout['rightstick_L'][2], button_layout['rightstick_R'][2]]
 		self.xdotool = "xdotool"
+		self.pyuserinput_process = None
 		self.py_mouse = PyMouse()
 		self.py_keyboard = PyKeyboard()
+		signal.signal(signal.SIGINT, self.signal_handler)
 		self.installEventFilter(self)
 		self.set_input_type()
 		self.initUI()
@@ -106,15 +108,18 @@ class TabPad(QWidget):
 		self.settings_action = QAction("Settings", self)
 		self.layout_action = QAction("Edit Current Layout", self)
 		self.restart_action = QAction("Restart", self)
+		self.autorepeat_action = QAction("Stop Autorepeat", self)
 		self.show_action.triggered.connect(self.showpad)
 		self.hide_action.triggered.connect(self.hidepad)
 		self.quit_action.triggered.connect(self.quithandler)
 		self.settings_action.triggered.connect(lambda: self.open_file("TabPadConfig.py"))
 		self.layout_action.triggered.connect(lambda: self.open_file(current_layout_file))
 		self.restart_action.triggered.connect(self.restart_program)
+		self.autorepeat_action.triggered.connect(self.finish_autorepeat)
 		self.tray_menu = QMenu()
 		self.tray_menu.addAction(self.show_action)
 		self.tray_menu.addAction(self.hide_action)
+		self.tray_menu.addAction(self.autorepeat_action)
 		self.tray_menu.addAction(self.settings_action)
 		self.tray_menu.addAction(self.layout_action)
 		self.tray_menu.addAction(self.restart_action)
@@ -128,10 +133,12 @@ class TabPad(QWidget):
 			self.tray_menu.exec_(QCursor.pos())
 
 	def quithandler(self):
+		self.cleanup_before_exit()
 		QtCore.QCoreApplication.instance().quit()
-		sys.exit(1)
+		sys.exit(0)
 
 	def hidepad(self):
+		self.cleanup_before_exit()
 		self.hide()
 
 	def showpad(self):
@@ -414,7 +421,7 @@ class TabPad(QWidget):
 		nub_center = (nub_startx + nub_endx)/2
 		x = self.roundify(widget_centerx - nub.width()/2)
 		y = self.roundify(widget_centery - nub.height()/2)
-		if widget_centerx != nub_center or abs(widget_center-nub_center) > 1:
+		if widget_centerx != nub_center or abs(widget_centerx - nub_center) > 1:
 			nub.move(x,y)
 
 	def keyhandler(self, label, x=0, y=0, names=None):
@@ -427,18 +434,17 @@ class TabPad(QWidget):
 			elif cmd:
 				self.diagonal_movement_overlap_fix(label, x, y)
 				self.execute_keypress(cmd, 'down', x, y)
-				self.keydown_list.append(cmd)
 		else:
 			if names:
 				for n in names:
 					cmd = button_layout[n][2]
 					self.execute_keypress(cmd, 'down', x, y)
-					self.keydown_list.append(cmd)
 
 	def eventFilter(self, source, event):
 		if event.type() == QtCore.QEvent.TouchBegin \
 			or event.type() == QtCore.QEvent.TouchUpdate:
 			tp = event.touchPoints()
+			ar_list = []
 			for t in tp:
 				event_pos = t.pos().toPoint()
 				event_x = event_pos.x()
@@ -448,6 +454,8 @@ class TabPad(QWidget):
 					widget_name = widget.objectName()
 					if hasattr(widget, 'text'):
 						text = widget.text()
+						if text == "Stop Autorepeat":
+							self.finish_autorepeat(event_x, event_y)
 						self.keyhandler(text, event_x, event_y)
 					elif widget_name == "leftstick":
 						nub_name = 'leftstick_nub'
@@ -538,6 +546,22 @@ class TabPad(QWidget):
 					self.execute_keypress(i, 'up', x, y)
 				self.keydown_list = []
 
+	def finish_autorepeat(self, x=0, y=0):
+		if self.autorepeat_keylist:
+			while self.autorepeat_keylist:
+				for key in self.autorepeat_keylist:
+					if key[1] != None:
+						proc = key[1]
+						subprocess.call("ps -ef | awk '$3 == \"" + str(proc.pid) + "\" {print $2}' | xargs kill -9", shell=True)
+						proc.terminate()
+						proc.kill()
+						self.autorepeat_keylist.remove(key)
+					if key[1] == None:
+						if self.pyuserinput_process != None:
+							if self.pyuserinput_process.is_alive():
+								self.pyuserinput_process.kill_process()
+							self.autorepeat_keylist.remove(key)
+
 	def set_input_type(self):
 		if input_method == "xdotool":
 			self.keydown_string ="keydown"
@@ -562,28 +586,121 @@ class TabPad(QWidget):
 		return input_list
 
 	def execute_keypress(self, cmnd, keytype, x, y):
-		c = list(cmnd)
-		if c:
-			c = self.modify_keys(c, keytype)
+		if cmnd:
+			c = list(cmnd)
 			if input_method == "xdotool":
-				c.insert(0, self.xdotool)
-				subprocess.Popen(c, stdout=subprocess.PIPE)
+				if c[-1] == False:
+					c = self.modify_keys(c, keytype)
+					c.insert(0, self.xdotool)
+					subprocess.Popen(c[:-1], stdout=subprocess.PIPE)
+					if not cmnd in self.keydown_list and keytype == 'down':
+						self.keydown_list.append(cmnd)
+				if c[-1] == True:
+					if keytype == 'down':
+						c = 'while true; do ' + self.xdotool + ' ' + c[0] + ' --repeat 1 --delay ' + str(autorepeat_interval*1000) + ' ' + c[1] + '; done'
+						if self.autorepeat_keylist:
+							l = []
+							for a in self.autorepeat_keylist:
+								if not cmnd in a:
+									l.append(a)
+							if len(self.autorepeat_keylist) == len(l):
+								p = subprocess.Popen(c, stdout=subprocess.PIPE, shell=True)
+								self.autorepeat_keylist.append((cmnd, p))
+						else:
+							p = subprocess.Popen(c, stdout=subprocess.PIPE, shell=True)
+							self.autorepeat_keylist.append((cmnd, p))
 			if input_method == "pyuserinput":
-				if c[0] == "press_key":
-					self.py_keyboard.press_key(c[1])
-				if c[0] == "release_key":
-					self.py_keyboard.release_key(c[1])
-				if c[0] == "press":
-					self.py_mouse.press(x, y, int(c[1]))
-				if c[0] == "release":
-					self.py_mouse.release(x, y, int(c[1]))
+				if c[-1] == False:
+					c = self.modify_keys(c, keytype)
+					if c[0] == "press_key":
+						self.py_keyboard.press_key(c[1])
+					if c[0] == "release_key":
+						self.py_keyboard.release_key(c[1])
+					if c[0] == "press":
+						self.py_mouse.press(x, y, int(c[1]))
+					if c[0] == "release":
+						self.py_mouse.release(x, y, int(c[1]))
+					if not cmnd in self.keydown_list and keytype == 'down':
+						self.keydown_list.append(cmnd)
+				if c[-1] == True:
+					if keytype == 'down':
+						if self.autorepeat_keylist:
+							l = []
+							for a in self.autorepeat_keylist:
+								if not cmnd in a:
+									l.append(a)
+							if len(self.autorepeat_keylist) == len(l):
+								p = None
+								if c[0] == "key":
+									self.pyuserinput_autrepeater(x, y, c[1], 'key')
+								if c[0] == "click":
+									self.pyuserinput_autrepeater(x, y, int(c[1], 'click'))
+								self.autorepeat_keylist.append((cmnd, p))
+						else:
+							p = None
+							if c[0] == "key":
+								self.pyuserinput_autrepeater(x, y, c[1], 'key')
+							if c[0] == "click":
+								self.pyuserinput_autrepeater(x, y, int(c[1], 'click'))
+							self.autorepeat_keylist.append((cmnd, p))
+
+	def pyuserinput_autrepeater(self, x, y, key, method):
+		self.pyuserinput_process = newProcess(1, 'PyUserInput Autorepeat Process', x, y, key, method)
+		self.pyuserinput_process.start()
 
 	def restart_program(self):
 		"""Restarts the current program.
 		Note: this function does not return. Any cleanup action (like
 		saving data) must be done before calling this function."""
+		self.cleanup_before_exit()
 		python = sys.executable
 		os.execl(python, python, * sys.argv)
+
+	def cleanup_before_exit(self):
+		if self.pyuserinput_process != None:
+			if self.pyuserinput_process.is_alive():
+				self.pyuserinput_process.kill_process()
+		self.finish_autorepeat()
+
+	def signal_handler(self, signal, frame):
+		print ('You forced killed the app.')
+		self.quithandler()
+
+class newProcess (multiprocessing.Process):
+	def __init__(self, processID, name, x, y, key, method):
+		super(newProcess, self).__init__()
+		self.processID = processID
+		self.name = name
+		self.daemon = True
+		self.py_mouse = PyMouse()
+		self.py_keyboard = PyKeyboard()
+		self.x, self.y, self.key, self.method = x, y, key, method
+
+	def run(self):
+		print ("\nStarting: " + self.name + " "+ str(self.pid))
+		self.autorepeater(self.x, self.y, self.key, self.method)
+
+	def autorepeater(self, x, y, key, method):
+		if method == "key":
+			while True:
+				self.py_keyboard.tap_key(key)
+				time.sleep(autorepeat_interval)
+		if method == "click":
+			while True:
+				self.py_mouse.click(x, y, key)
+				time.sleep(autorepeat_interval)
+
+	def kill_process(self):
+		proc_list = []
+		while multiprocessing.active_children():
+			for p in multiprocessing.active_children():
+				if p.is_alive():
+					p.terminate()
+					proc_list.append(p.pid)
+		if self.is_alive():
+			self.terminate()
+			proc_list.append(self.pid)
+		print ("\nTerminated Autorepeat Processes:", *set(proc_list), sep=' ')
 	
 def main():
 	app = QApplication(sys.argv)
