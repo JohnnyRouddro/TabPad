@@ -589,13 +589,13 @@ class TabPad(QWidget):
 		if cmnd:
 			c = list(cmnd)
 			if input_method == "xdotool":
-				if c[-1] == False:
+				if c[-1][1] == False:
 					c = self.modify_keys(c, keytype)
 					c.insert(0, self.xdotool)
 					subprocess.Popen(c[:-1], stdout=subprocess.PIPE)
 					if not cmnd in self.keydown_list and keytype == 'down':
 						self.keydown_list.append(cmnd)
-				if c[-1] == True:
+				if c[-1][1] == True:
 					if keytype == 'down':
 						c = 'while true; do ' + self.xdotool + ' ' + c[0] + ' --repeat 1 --delay ' + str(autorepeat_interval*1000) + ' ' + c[1] + '; done'
 						if self.autorepeat_keylist:
@@ -610,7 +610,7 @@ class TabPad(QWidget):
 							p = subprocess.Popen(c, stdout=subprocess.PIPE, shell=True)
 							self.autorepeat_keylist.append((cmnd, p))
 			if input_method == "pyuserinput":
-				if c[-1] == False:
+				if c[-1][1] == False:
 					c = self.modify_keys(c, keytype)
 					if c[0] == "press_key":
 						self.py_keyboard.press_key(c[1])
@@ -622,7 +622,7 @@ class TabPad(QWidget):
 						self.py_mouse.release(x, y, int(c[1]))
 					if not cmnd in self.keydown_list and keytype == 'down':
 						self.keydown_list.append(cmnd)
-				if c[-1] == True:
+				if c[-1][1] == True:
 					if keytype == 'down':
 						if self.autorepeat_keylist:
 							l = []
