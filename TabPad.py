@@ -597,7 +597,7 @@ class TabPad(QWidget):
 						self.keydown_list.append(cmnd)
 				if c[-1][1] == True:
 					if keytype == 'down':
-						c = 'while true; do ' + self.xdotool + ' ' + c[0] + ' --repeat 1 --delay ' + str(autorepeat_interval*1000) + ' ' + c[1] + '; done'
+						c = 'while true; do ' + self.xdotool + ' ' + c[0] + ' --repeat ' + str(autorepeat_count) + ' --delay ' + str(self.roundify(autorepeat_interval*1000)) + ' ' + c[1] + '; done'
 						if self.autorepeat_keylist:
 							l = []
 							for a in self.autorepeat_keylist:
@@ -683,11 +683,11 @@ class newProcess (multiprocessing.Process):
 	def autorepeater(self, x, y, key, method):
 		if method == "key":
 			while True:
-				self.py_keyboard.tap_key(key)
+				self.py_keyboard.tap_key(key, n=autorepeat_count)
 				time.sleep(autorepeat_interval)
 		if method == "click":
 			while True:
-				self.py_mouse.click(x, y, key)
+				self.py_mouse.click(x, y, key, n=autorepeat_count)
 				time.sleep(autorepeat_interval)
 
 	def kill_process(self):

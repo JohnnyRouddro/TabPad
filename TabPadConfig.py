@@ -74,6 +74,15 @@ show_analog_sticks_nub = True
 # Autorepeat/Turbo/Rapid-fire interval in seconds (e.g. 0.1, 0.5, 1, 2).
 autorepeat_interval = 0.1
 
+# Number of times you want to repeat keystrokes/clicks between each time interval.
+# DO NOT set it too high (max 5 should be good).
+# Higher values will work but can have all sorts of weird behaviors.
+# Setting it too high can crash your system or your device can go on autoclicking frenzy.
+# If you really want faster autorepeat, try reducing time interval above.
+# Ideally I would always keep it at 1.
+# !!!!! YOU HAVE BEEN WARNED !!!!!
+autorepeat_count = 1
+
 # Follow the instructions below to create new layout profile.
 # Make a copy of "DefaultLayout.py" file.
 # Change the name of new layout file (do not remove .py extension).
