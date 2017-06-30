@@ -10,9 +10,12 @@
 # And vertically at 5% of total height value.
 
 # The next value in square brackets defines command to be executed on button press.
-# Most of the time you will just need to change 'key' or 'click' type (second part in square brackets).
+# Most of the time you will just need to change 'key' or 'click' type and value (first and second parts in square brackets).
 # You can read more about Xdotool and PyUserInput on Internet.
-# The last value in square bracket toggles autorepeat on or off.
+# The last value in square [] brackets defines key/click behavior according to following values.
+# 0 = Normal (Default)
+# 1 = Autorepeat
+# 2 = Sticky
 
 # The next value defines button color (use only hex color values).
 
@@ -33,38 +36,38 @@
 button_layout = {} ## DO NOT EDIT THIS
 
 button_layout["leftstick"] = (3, 30, [], "#ffffff", (150, 150))
-button_layout["leftstick_U"] = (None, None, ["key", "Up", False], "#ffffff", (40, 80))
-button_layout["leftstick_R"] = (None, None, ["key", "Right", False], "#ffffff", (80, 40))
-button_layout["leftstick_D"] = (None, None, ["key", "Down", False], "#ffffff", (40, 80))
-button_layout["leftstick_L"] = (None, None, ["key", "Left", False], "#ffffff", (80, 40))
+button_layout["leftstick_U"] = (None, None, ["key", "Up", 0], "#ffffff", (40, 80))
+button_layout["leftstick_R"] = (None, None, ["key", "Right", 0], "#ffffff", (80, 40))
+button_layout["leftstick_D"] = (None, None, ["key", "Down", 0], "#ffffff", (40, 80))
+button_layout["leftstick_L"] = (None, None, ["key", "Left", 0], "#ffffff", (80, 40))
 
 button_layout["rightstick"] = (72, 60, [], "#ffffff", (150, 150))
-button_layout["rightstick_U"] = (None, None, ["key", "Up", False], "#ffffff", (40, 80))
-button_layout["rightstick_R"] = (None, None, ["key", "Right", False], "#ffffff", (80, 40))
-button_layout["rightstick_D"] = (None, None, ["key", "Down", False], "#ffffff", (40, 80))
-button_layout["rightstick_L"] = (None, None, ["key", "Left", False], "#ffffff", (80, 40))
+button_layout["rightstick_U"] = (None, None, ["key", "Up", 0], "#ffffff", (40, 80))
+button_layout["rightstick_R"] = (None, None, ["key", "Right", 0], "#ffffff", (80, 40))
+button_layout["rightstick_D"] = (None, None, ["key", "Down", 0], "#ffffff", (40, 80))
+button_layout["rightstick_L"] = (None, None, ["key", "Left", 0], "#ffffff", (80, 40))
 
-button_layout["L1"] = (6, 5, ["key", "Return", False], "#ff0000", (70, 40))
-button_layout["L2"] = (14, 5, ["key", "w", False], "#ff0000", (70, 40))
-button_layout["R1"] = (79, 5, ["key", "o", False], "#ff0000", (70, 40))
-button_layout["R2"] = (87, 5, ["key", "p", False], "#ff0000", (70, 40))
+button_layout["L1"] = (6, 5, ["key", "Return", 0], "#ff0000", (70, 40))
+button_layout["L2"] = (14, 5, ["key", "w", 0], "#ff0000", (70, 40))
+button_layout["R1"] = (79, 5, ["key", "o", 0], "#ff0000", (70, 40))
+button_layout["R2"] = (87, 5, ["key", "p", 0], "#ff0000", (70, 40))
 
 button_layout["dpad"] = (15, 61, [], "#ffffff", (150, 150))
-button_layout["U"] = (None, None, ["key", "Up", False], "#ffffff", (40, 80))
-button_layout["R"] = (None, None, ["key", "Right", False], "#ffffff", (80, 40))
-button_layout["D"] = (None, None, ["key", "Down", False], "#ffffff", (40, 80))
-button_layout["L"] = (None, None, ["key", "Left", False], "#ffffff", (80, 40))
+button_layout["U"] = (None, None, ["key", "Up", 0], "#ffffff", (40, 80))
+button_layout["R"] = (None, None, ["key", "Right", 0], "#ffffff", (80, 40))
+button_layout["D"] = (None, None, ["key", "Down", 0], "#ffffff", (40, 80))
+button_layout["L"] = (None, None, ["key", "Left", 0], "#ffffff", (80, 40))
 
-button_layout["3"] = (83, 22, ["key", "i", False], "#008000", (60, 60))
-button_layout["2"] = (91, 32, ["key", "l", False], "#ffff00", (60, 60))
-button_layout["1"] = (83, 42, ["key", "k", False], "#0000ff", (60, 60))
-button_layout["4"] = (75, 32, ["key", "j", False], "#ffc0cb", (60, 60))
+button_layout["3"] = (83, 22, ["key", "i", 0], "#008000", (60, 60))
+button_layout["2"] = (91, 32, ["key", "l", 0], "#ffff00", (60, 60))
+button_layout["1"] = (83, 42, ["key", "k", 0], "#0000ff", (60, 60))
+button_layout["4"] = (75, 32, ["key", "j", 0], "#ffc0cb", (60, 60))
 
-button_layout["Start"] = (45, 92, ["key", "v", False], "#ffa500", (70, 30))
-button_layout["Select"] = (55, 92, ["key", "n", False], "#800080", (70, 30))
+button_layout["Start"] = (45, 92, ["key", "v", 0], "#ffa500", (70, 30))
+button_layout["Select"] = (55, 92, ["key", "n", 0], "#800080", (70, 30))
 
-# button_layout["LMB"] = (3, 26, ["click", "1", False], "#800080", (60, 80))
-# button_layout["RMB"] = (90, 26, ["click", "2", False], "#800080", (60, 80))
+# button_layout["LMB"] = (3, 26, ["click", "1", 0], "#800080", (60, 80))
+# button_layout["RMB"] = (90, 26, ["click", "2", 0], "#800080", (60, 80))
 
 button_layout["Close"] = (35, 92, [], "#808080", (70, 30))
-button_layout["Stop Autorepeat"] = (1, 92, [], "#808080", (130, 30))
+button_layout["Stop All Inputs"] = (1, 92, [], "#808080", (130, 30))

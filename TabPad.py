@@ -40,6 +40,7 @@ class TabPad(QWidget):
 		self.rightstick_deadzone_coords = []
 		self.keydown_list = []
 		self.autorepeat_keylist = []
+		self.sticky_keylist = []
 		self.dpad_keys = [button_layout['U'][2], button_layout['D'][2], button_layout['L'][2], button_layout['R'][2]]
 		self.leftstick_keys = [button_layout['leftstick_U'][2], button_layout['leftstick_D'][2], button_layout['leftstick_L'][2], button_layout['leftstick_R'][2]]
 		self.rightstick_keys = [button_layout['rightstick_U'][2], button_layout['rightstick_D'][2], button_layout['rightstick_L'][2], button_layout['rightstick_R'][2]]
@@ -108,20 +109,20 @@ class TabPad(QWidget):
 		self.settings_action = QAction("Settings", self)
 		self.layout_action = QAction("Edit Current Layout", self)
 		self.restart_action = QAction("Restart", self)
-		self.autorepeat_action = QAction("Stop Autorepeat", self)
+		self.autorepeat_action = QAction("Stop All Inputs", self)
 		self.show_action.triggered.connect(self.showpad)
 		self.hide_action.triggered.connect(self.hidepad)
 		self.quit_action.triggered.connect(self.quithandler)
 		self.settings_action.triggered.connect(lambda: self.open_file("TabPadConfig.py"))
 		self.layout_action.triggered.connect(lambda: self.open_file(current_layout_file))
 		self.restart_action.triggered.connect(self.restart_program)
-		self.autorepeat_action.triggered.connect(self.finish_autorepeat)
+		self.autorepeat_action.triggered.connect(self.finish_all_inputs)
 		self.tray_menu = QMenu()
 		self.tray_menu.addAction(self.show_action)
 		self.tray_menu.addAction(self.hide_action)
 		self.tray_menu.addAction(self.autorepeat_action)
-		self.tray_menu.addAction(self.settings_action)
 		self.tray_menu.addAction(self.layout_action)
+		self.tray_menu.addAction(self.settings_action)
 		self.tray_menu.addAction(self.restart_action)
 		self.tray_menu.addAction(self.quit_action)
 		self.tray_icon.setContextMenu(self.tray_menu)
@@ -444,7 +445,6 @@ class TabPad(QWidget):
 		if event.type() == QtCore.QEvent.TouchBegin \
 			or event.type() == QtCore.QEvent.TouchUpdate:
 			tp = event.touchPoints()
-			ar_list = []
 			for t in tp:
 				event_pos = t.pos().toPoint()
 				event_x = event_pos.x()
@@ -454,8 +454,8 @@ class TabPad(QWidget):
 					widget_name = widget.objectName()
 					if hasattr(widget, 'text'):
 						text = widget.text()
-						if text == "Stop Autorepeat":
-							self.finish_autorepeat(event_x, event_y)
+						if text == "Stop All Inputs":
+							self.finish_all_inputs(event_x, event_y)
 						self.keyhandler(text, event_x, event_y)
 					elif widget_name == "leftstick":
 						nub_name = 'leftstick_nub'
@@ -542,11 +542,12 @@ class TabPad(QWidget):
 						self.keydown_list.remove(k)
 		if keys == None:
 			if self.keydown_list:
-				for i in self.keydown_list:
-					self.execute_keypress(i, 'up', x, y)
-				self.keydown_list = []
+				while self.keydown_list:
+					for i in self.keydown_list:
+						self.execute_keypress(i, 'up', x, y)
+						self.keydown_list.remove(i)
 
-	def finish_autorepeat(self, x=0, y=0):
+	def finish_all_inputs(self, x=0, y=0):
 		if self.autorepeat_keylist:
 			while self.autorepeat_keylist:
 				for key in self.autorepeat_keylist:
@@ -561,6 +562,11 @@ class TabPad(QWidget):
 							if self.pyuserinput_process.is_alive():
 								self.pyuserinput_process.kill_process()
 							self.autorepeat_keylist.remove(key)
+		if self.sticky_keylist:
+			while self.sticky_keylist:
+				for i in self.sticky_keylist:
+					self.execute_keypress(i, 'up', x, y)
+					self.sticky_keylist.remove(i)
 
 	def set_input_type(self):
 		if input_method == "xdotool":
@@ -589,13 +595,23 @@ class TabPad(QWidget):
 		if cmnd:
 			c = list(cmnd)
 			if input_method == "xdotool":
-				if c[-1][1] == False:
+				if c[-1] == 0:
 					c = self.modify_keys(c, keytype)
 					c.insert(0, self.xdotool)
 					subprocess.Popen(c[:-1], stdout=subprocess.PIPE)
 					if not cmnd in self.keydown_list and keytype == 'down':
 						self.keydown_list.append(cmnd)
-				if c[-1][1] == True:
+				if c[-1] == 2:
+					c = self.modify_keys(c, keytype)
+					c.insert(0, self.xdotool)
+					subprocess.Popen(c[:-1], stdout=subprocess.PIPE)
+					if self.sticky_keylist:
+						if not cmnd in self.sticky_keylist and keytype == 'down':
+							self.sticky_keylist.append(cmnd)
+					else:
+						if keytype == 'down':
+							self.sticky_keylist.append(cmnd)
+				if c[-1] == 1:
 					if keytype == 'down':
 						c = 'while true; do ' + self.xdotool + ' ' + c[0] + ' --repeat ' + str(autorepeat_count) + ' --delay ' + str(self.roundify(autorepeat_interval*1000)) + ' ' + c[1] + '; done'
 						if self.autorepeat_keylist:
@@ -610,7 +626,7 @@ class TabPad(QWidget):
 							p = subprocess.Popen(c, stdout=subprocess.PIPE, shell=True)
 							self.autorepeat_keylist.append((cmnd, p))
 			if input_method == "pyuserinput":
-				if c[-1][1] == False:
+				if c[-1] == 0:
 					c = self.modify_keys(c, keytype)
 					if c[0] == "press_key":
 						self.py_keyboard.press_key(c[1])
@@ -622,7 +638,23 @@ class TabPad(QWidget):
 						self.py_mouse.release(x, y, int(c[1]))
 					if not cmnd in self.keydown_list and keytype == 'down':
 						self.keydown_list.append(cmnd)
-				if c[-1][1] == True:
+				if c[-1] == 2:
+					c = self.modify_keys(c, keytype)
+					if c[0] == "press_key":
+						self.py_keyboard.press_key(c[1])
+					if c[0] == "release_key":
+						self.py_keyboard.release_key(c[1])
+					if c[0] == "press":
+						self.py_mouse.press(x, y, int(c[1]))
+					if c[0] == "release":
+						self.py_mouse.release(x, y, int(c[1]))
+					if self.sticky_keylist:
+						if not cmnd in self.sticky_keylist and keytype == 'down':
+							self.sticky_keylist.append(cmnd)
+					else:
+						if keytype == 'down':
+							self.sticky_keylist.append(cmnd)
+				if c[-1] == 1:
 					if keytype == 'down':
 						if self.autorepeat_keylist:
 							l = []
@@ -632,19 +664,19 @@ class TabPad(QWidget):
 							if len(self.autorepeat_keylist) == len(l):
 								p = None
 								if c[0] == "key":
-									self.pyuserinput_autrepeater(x, y, c[1], 'key')
+									self.pyuserinput_autorepeater(x, y, c[1], 'key')
 								if c[0] == "click":
-									self.pyuserinput_autrepeater(x, y, int(c[1], 'click'))
+									self.pyuserinput_autorepeater(x, y, int(c[1], 'click'))
 								self.autorepeat_keylist.append((cmnd, p))
 						else:
 							p = None
 							if c[0] == "key":
-								self.pyuserinput_autrepeater(x, y, c[1], 'key')
+								self.pyuserinput_autorepeater(x, y, c[1], 'key')
 							if c[0] == "click":
-								self.pyuserinput_autrepeater(x, y, int(c[1], 'click'))
+								self.pyuserinput_autorepeater(x, y, int(c[1], 'click'))
 							self.autorepeat_keylist.append((cmnd, p))
 
-	def pyuserinput_autrepeater(self, x, y, key, method):
+	def pyuserinput_autorepeater(self, x, y, key, method):
 		self.pyuserinput_process = newProcess(1, 'PyUserInput Autorepeat Process', x, y, key, method)
 		self.pyuserinput_process.start()
 
@@ -657,10 +689,11 @@ class TabPad(QWidget):
 		os.execl(python, python, * sys.argv)
 
 	def cleanup_before_exit(self):
+		self.finish_all_inputs()
+		self.trigger_key_up()
 		if self.pyuserinput_process != None:
 			if self.pyuserinput_process.is_alive():
 				self.pyuserinput_process.kill_process()
-		self.finish_autorepeat()
 
 	def signal_handler(self, signal, frame):
 		print ('You forced killed the app.')
