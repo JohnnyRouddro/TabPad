@@ -41,6 +41,7 @@ class TabPad(QWidget):
 		self.keydown_list = []
 		self.autorepeat_keylist = []
 		self.sticky_keylist = []
+		self.multitouch_points = []
 		self.dpad_keys = [button_layout['U'][2], button_layout['D'][2], button_layout['L'][2], button_layout['R'][2]]
 		self.leftstick_keys = [button_layout['leftstick_U'][2], button_layout['leftstick_D'][2], button_layout['leftstick_L'][2], button_layout['leftstick_R'][2]]
 		self.rightstick_keys = [button_layout['rightstick_U'][2], button_layout['rightstick_D'][2], button_layout['rightstick_L'][2], button_layout['rightstick_R'][2]]
@@ -441,10 +442,54 @@ class TabPad(QWidget):
 					cmd = button_layout[n][2]
 					self.execute_keypress(cmd, 'down', x, y)
 
+	def multitouch_fix(self, touch_points):
+		tp = touch_points
+		diff_list = []
+		last_list = []
+		second_last_list = []
+		self.multitouch_points.append(tp)
+		if len(self.multitouch_points) >= 2 and tp:
+			last = self.multitouch_points[-1]
+			second_last = self.multitouch_points[-2]
+			if len(last) < len(second_last):
+				for s in second_last:
+					for l in last:
+						s_pos = s.pos().toPoint()
+						l_pos = l.pos().toPoint()
+						ws = self.childAt(s_pos)
+						wl = self.childAt(l_pos)
+						if ws:
+							if hasattr(ws, 'text'):
+								second_last_list.append((s_pos , ws.text()))
+							elif ws.objectName() != '':
+								second_last_list.append((s_pos, ws.objectName()))
+						if wl:
+							if hasattr(wl, 'text'):
+								last_list.append((l_pos, wl.text()))
+							elif wl.objectName() != '':
+								last_list.append((l_pos, wl.objectName()))
+						if second_last_list and last_list:
+							for sl in second_last_list:
+								for l in last_list:
+									if sl[1] != l[1]:
+										diff_list.append(sl)
+		if diff_list:
+			for d in diff_list:
+				if d[1] == 'dpad_frame':
+					self.trigger_key_up(d[0].x(), d[0].y(), self.dpad_keys)
+				elif d[1] == 'leftstick'or d[1] == 'leftstick_nub':
+					self.trigger_key_up(d[0].x(), d[0].y(), self.leftstick_keys)
+				elif d[1] == 'rightstick'or d[1] == 'rightstick_nub':
+					self.trigger_key_up(d[0].x(), d[0].y(), self.rightstick_keys)
+				else:
+					self.trigger_key_up(d[0].x(), d[0].y(), [button_layout[d[1]][2]])
+		self.multitouch_points = self.multitouch_points[-2:]
+
 	def eventFilter(self, source, event):
 		if event.type() == QtCore.QEvent.TouchBegin \
 			or event.type() == QtCore.QEvent.TouchUpdate:
 			tp = event.touchPoints()
+			self.multitouch_fix(tp)
 			for t in tp:
 				event_pos = t.pos().toPoint()
 				event_x = event_pos.x()
@@ -485,6 +530,7 @@ class TabPad(QWidget):
 			widget = self.findChildren(QWidget, 'rightstick')
 			widget = widget[0]
 			self.recenter_nubs(widget, nub)
+			self.multitouch_points = []
 			return True
 		return False
 
