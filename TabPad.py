@@ -521,15 +521,21 @@ class TabPad(QWidget):
 				event_y = event_pos.y()
 				self.trigger_key_up(event_x, event_y)
 			nub = self.findChildren(QWidget, 'leftstick_nub')
-			nub = nub[0]
+			if nub:
+				nub = nub[0]
 			widget = self.findChildren(QWidget, 'leftstick')
-			widget = widget[0]
-			self.recenter_nubs(widget, nub)
+			if widget:
+				widget = widget[0]
+			if nub and widget:
+				self.recenter_nubs(widget, nub)
 			nub = self.findChildren(QWidget, 'rightstick_nub')
-			nub = nub[0]
+			if nub:
+				nub = nub[0]
 			widget = self.findChildren(QWidget, 'rightstick')
-			widget = widget[0]
-			self.recenter_nubs(widget, nub)
+			if widget:
+				widget = widget[0]
+			if nub and widget:
+				self.recenter_nubs(widget, nub)
 			self.multitouch_points = []
 			return True
 		return False

@@ -54,7 +54,7 @@ deadzone_color = "#ffffff"
 button_border_size = 1
 button_border_radius = 10
 button_border_color = "#555555"
-button_opacity = 50 # 100 is fully opaque
+button_opacity = 20 # 100 is fully opaque
 
 # Close button behavior (True minimizes to system tray, False closes the app)
 hide_on_close = True
