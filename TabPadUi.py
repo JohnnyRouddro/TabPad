@@ -180,16 +180,21 @@ class MainSettings(QWidget):
 			vbtn.setMinimumSize(QtCore.QSize(200, 50))
 			if value_type == bool:
 				vbtn.setStyleSheet(
-					'QCheckBox::indicator {min-width:50;min-height:50;}'
-					'QCheckBox::indicator:checked {background-color:limegreen;border:5px solid #555555;}'
-					'QCheckBox::indicator:unchecked {background-color:grey;border:5px solid #555555;}'
+					'QCheckBox::indicator {min-width:50;min-height:50;border-radius:25px;border:4px solid #555555;}'
+					'QCheckBox::indicator:checked {background-color:green;}'
+					'QCheckBox::indicator:unchecked {background-color:grey;}'
 				)
 			h.addStretch(1)
 			h.addWidget(vbtn)
 	
 		h.addWidget(ibtn)
 		w.setLayout(h)
-		w.setMinimumSize(QtCore.QSize(50, 60))
+		w.setMinimumSize(QtCore.QSize(50, 70))
+		w.setObjectName('SettingsRow')
+		w.setStyleSheet('#SettingsRow { \
+			background-color:#eeeeee;border: 1px solid #bbbbbb; \
+			border-radius:5px; \
+		}')
 		box.addWidget(w)
 
 	def on_apply_clicked(self):
