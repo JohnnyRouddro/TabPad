@@ -19,14 +19,21 @@ class MainSettings(QWidget):
 		self.initUI()
 		
 	def initUI(self):      
-		applyButton = QPushButton("Apply")
-		quitButton = QPushButton("Quit")
-		cancelButton = QPushButton("Cancel")
-		defaultsButton = QPushButton("Restore Defaults")
+		applyButton = QPushButton(" Apply ")
+		quitButton = QPushButton(" Quit ")
+		cancelButton = QPushButton(" Cancel ")
+		defaultsButton = QPushButton(" Restore Defaults ")
+
 		cancelButton.clicked.connect(self.cancel_settings)
 		applyButton.clicked.connect(self.on_apply_clicked)
 		defaultsButton.clicked.connect(self.restore_defaults)
 		quitButton.clicked.connect(self.parent.quithandler)
+
+		cancelButton.setIcon(QIcon.fromTheme("window-close"))
+		defaultsButton.setIcon(QIcon.fromTheme("view-refresh"))
+		quitButton.setIcon(QIcon.fromTheme("application-exit"))
+		applyButton.setIcon(QIcon.fromTheme("document-save"))
+
 		cancelButton.setMinimumSize(QtCore.QSize(50, 50))
 		applyButton.setMinimumSize(QtCore.QSize(50, 50))
 		defaultsButton.setMinimumSize(QtCore.QSize(50, 50))
@@ -258,6 +265,8 @@ class Dialog(QDialog):
 
 		self.buttons.accepted.connect(self.accept)
 		self.buttons.rejected.connect(self.reject)
+		# self.buttons.buttons()[0].setIcon(QIcon.fromTheme("document-save"))
+		# self.buttons.buttons()[1].setIcon(QIcon.fromTheme("window-close"))
 		self.buttons.setMinimumSize(QtCore.QSize(50, 50))
 		for b in self.buttons.buttons():
 			b.setMinimumSize(QtCore.QSize(50, 50))

@@ -105,6 +105,7 @@ class TabPad(QWidget):
 	def systraysetup(self):
 		self.tray_icon = QSystemTrayIcon(self)
 		self.tray_icon.setIcon(self.appicon)
+
 		self.show_action = QAction("Show", self)
 		self.quit_action = QAction("Exit", self)
 		self.hide_action = QAction("Hide", self)
@@ -112,14 +113,23 @@ class TabPad(QWidget):
 		self.layout_action = QAction("Edit Current Layout", self)
 		self.restart_action = QAction("Restart", self)
 		self.autorepeat_action = QAction("Stop All Inputs", self)
+
+		self.show_action.setIcon(QIcon.fromTheme("go-home"))
+		self.hide_action.setIcon(QIcon.fromTheme("go-down"))
+		self.settings_action.setIcon(QIcon.fromTheme("preferences-other"))
+		self.layout_action.setIcon(QIcon.fromTheme("edit-find-replace"))
+		self.quit_action.setIcon(QIcon.fromTheme("application-exit"))
+		self.autorepeat_action.setIcon(QIcon.fromTheme("process-stop"))
+		self.restart_action.setIcon(QIcon.fromTheme("view-refresh"))
+		
 		self.show_action.triggered.connect(self.showpad)
 		self.hide_action.triggered.connect(self.hidepad)
 		self.quit_action.triggered.connect(self.quithandler)
-		# self.settings_action.triggered.connect(lambda: self.open_file("TabPadConfig.py"))
 		self.settings_action.triggered.connect(self.show_settings_window)
 		self.layout_action.triggered.connect(lambda: self.open_file(current_layout_file))
 		self.restart_action.triggered.connect(self.restart_program)
 		self.autorepeat_action.triggered.connect(self.finish_all_inputs)
+		
 		self.tray_menu = QMenu()
 		self.tray_menu.addAction(self.show_action)
 		self.tray_menu.addAction(self.hide_action)
