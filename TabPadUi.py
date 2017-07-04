@@ -2,7 +2,7 @@
 
 from PyQt5.QtWidgets import QWidget, QPushButton, QApplication, QHBoxLayout, \
 QVBoxLayout, QScrollArea, QLabel, QComboBox, QCheckBox, QColorDialog, \
-QLineEdit, QSpinBox, QDoubleSpinBox, QDialog, QDialogButtonBox, QStyleFactory, QScroller
+QLineEdit, QSpinBox, QDoubleSpinBox, QDialog, QDialogButtonBox, QStyleFactory, QScroller, QScrollerProperties
 from TabPadSettings import *
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtCore
@@ -58,7 +58,17 @@ class MainSettings(QWidget):
 					self.createandmove(i[0], i[1], j[-1], i[-1], vlayout)
 		widget.setLayout(vlayout)
 		scroll.setWidget(widget)
-		QScroller.grabGesture(scroll.viewport(), QScroller.TouchGesture)
+
+		qs = QScroller.scroller(scroll.viewport())
+		props = qs.scrollerProperties()
+		# props.setScrollMetric(QScrollerProperties.VerticalOvershootPolicy, QScrollerProperties.OvershootAlwaysOff)
+		props.setScrollMetric(QScrollerProperties.DecelerationFactor, 0.35)
+		props.setScrollMetric(QScrollerProperties.DragStartDistance, .001)
+		qs.setScrollerProperties(props)
+		qs.grabGesture(scroll.viewport(), QScroller.TouchGesture)
+		# print(qs.scrollerProperties().scrollMetric(QScrollerProperties.DecelerationFactor))
+		# print(qs.scrollerProperties().scrollMetric(QScrollerProperties.DragStartDistance))
+		
 		vbox.addWidget(scroll)
 		vbox.addLayout(hbox)
 		self.setLayout(vbox)
@@ -271,8 +281,7 @@ class Dialog(QDialog):
 
 		self.buttons.accepted.connect(self.accept)
 		self.buttons.rejected.connect(self.reject)
-		# self.buttons.buttons()[0].setIcon(QIcon.fromTheme("document-save"))
-		# self.buttons.buttons()[1].setIcon(QIcon.fromTheme("window-close"))
+
 		self.buttons.setMinimumSize(QtCore.QSize(50, 50))
 		for b in self.buttons.buttons():
 			b.setMinimumSize(QtCore.QSize(50, 50))
