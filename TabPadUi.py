@@ -2,7 +2,7 @@
 
 from PyQt5.QtWidgets import QWidget, QPushButton, QApplication, QHBoxLayout, \
 QVBoxLayout, QScrollArea, QLabel, QComboBox, QCheckBox, QColorDialog, \
-QLineEdit, QSpinBox, QDoubleSpinBox, QDialog, QDialogButtonBox, QStyleFactory
+QLineEdit, QSpinBox, QDoubleSpinBox, QDialog, QDialogButtonBox, QStyleFactory, QScroller
 from TabPadSettings import *
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtCore
@@ -58,6 +58,7 @@ class MainSettings(QWidget):
 					self.createandmove(i[0], i[1], j[-1], i[-1], vlayout)
 		widget.setLayout(vlayout)
 		scroll.setWidget(widget)
+		QScroller.grabGesture(scroll.viewport(), QScroller.TouchGesture)
 		vbox.addWidget(scroll)
 		vbox.addLayout(hbox)
 		self.setLayout(vbox)
