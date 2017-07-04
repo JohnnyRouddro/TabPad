@@ -173,11 +173,7 @@ class MainSettings(QWidget):
 			self.current_values.append(('User_Settings', label, vbtn, value, value_type))
 			vbtn.setMinimumSize(QtCore.QSize(200, 50))
 			if value_type == bool:
-				vbtn.setStyleSheet(
-					'QCheckBox::indicator {min-width:50;min-height:50;}'
-					'QCheckBox::indicator:checked {background-color:limegreen;border:5px solid #555555;}'
-					'QCheckBox::indicator:unchecked {background-color:grey;border:5px solid #555555;}'
-					)
+				vbtn.setStyleSheet('QCheckBox::indicator {min-width:50;min-height:50;}')
 			h.addStretch(1)
 			h.addWidget(vbtn)
 	
