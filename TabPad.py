@@ -27,6 +27,8 @@ class TabPad(QWidget):
 		self.setFocusPolicy(QtCore.Qt.NoFocus)
 		self.setAttribute(QtCore.Qt.WA_AcceptTouchEvents)
 		QApplication.setQuitOnLastWindowClosed(False)
+		# print (QStyleFactory.keys())
+		QApplication.setStyle(QStyleFactory.create("Fusion"))
 		QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_SynthesizeTouchForUnhandledMouseEvents)	
 		QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_SynthesizeMouseForUnhandledTouchEvents)	
 		self.appicon = QIcon.fromTheme("input-gaming")

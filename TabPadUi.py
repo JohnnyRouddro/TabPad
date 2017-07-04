@@ -2,7 +2,7 @@
 
 from PyQt5.QtWidgets import QWidget, QPushButton, QApplication, QHBoxLayout, \
 QVBoxLayout, QScrollArea, QLabel, QComboBox, QCheckBox, QColorDialog, \
-QLineEdit, QSpinBox, QDoubleSpinBox, QDialog, QDialogButtonBox
+QLineEdit, QSpinBox, QDoubleSpinBox, QDialog, QDialogButtonBox, QStyleFactory
 from TabPadSettings import *
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtCore
@@ -17,7 +17,6 @@ class MainSettings(QWidget):
 		self.changed_values = []
 		self.current_values = []
 		self.initUI()
-
 		
 	def initUI(self):      
 		applyButton = QPushButton("Apply")
@@ -143,7 +142,7 @@ class MainSettings(QWidget):
 				color_name = read_settings('User_Settings', label)
 				stl = "background-color:%s;" % color_name
 				vbtn.setStyleSheet(stl)
-				vbtn.clicked.connect(lambda: self.get_color(label, vbtn, color_name))
+				vbtn.clicked.connect(lambda: self.get_color(label, vbtn))
 		
 		if value_type == bool:
 			vbtn = QCheckBox()
@@ -173,7 +172,11 @@ class MainSettings(QWidget):
 			self.current_values.append(('User_Settings', label, vbtn, value, value_type))
 			vbtn.setMinimumSize(QtCore.QSize(200, 50))
 			if value_type == bool:
-				vbtn.setStyleSheet('QCheckBox::indicator {min-width:50;min-height:50;}')
+				vbtn.setStyleSheet(
+					'QCheckBox::indicator {min-width:50;min-height:50;}'
+					'QCheckBox::indicator:checked {background-color:limegreen;border:5px solid #555555;}'
+					'QCheckBox::indicator:unchecked {background-color:grey;border:5px solid #555555;}'
+				)
 			h.addStretch(1)
 			h.addWidget(vbtn)
 	
@@ -191,7 +194,7 @@ class MainSettings(QWidget):
 	def write_widget_value(self, label, val):
 		self.changed_values.append(('User_Settings', label, val))
 
-	def get_color(self, label, btn, initial):
+	def get_color(self, label, btn):
 		color = QColorDialog.getColor()
 		if color.isValid():
 			color = color.name()
@@ -199,8 +202,8 @@ class MainSettings(QWidget):
 			btn.setStyleSheet(stl)
 			self.changed_values.append(('User_Settings', label, color))
 
-	def show_dialog(self, text, dialog_type='normal'):
-		d = Dialog(self, text, dialog_type)
+	def show_dialog(self, text):
+		d = Dialog(self, text)
 		result = d.exec_()
 		return result
 		
@@ -234,13 +237,12 @@ class MainSettings(QWidget):
 		self.parent.showpad()
 
 class Dialog(QDialog):
-	def __init__(self, parent, text, dialog_type="normal"):
+	def __init__(self, parent, text):
 		super(Dialog, self).__init__(parent)
 		self.screen_resolution = QApplication.desktop().screenGeometry()
 		self.screen_width, self.screen_height = self.screen_resolution.width(), self.screen_resolution.height()
 		self.parent = parent
 		self.text = text
-		self.dialog_type = dialog_type
 		self.setStyleSheet('font-size:20px')
 		self.initUI()
 		
