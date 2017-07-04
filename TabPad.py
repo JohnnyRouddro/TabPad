@@ -7,14 +7,12 @@
 # Launch TabPad by running command below.
 # python3 TabPad.py
 
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QWidget, QApplication, QPushButton
-from PyQt5.QtWidgets import QSystemTrayIcon, QStyle, QAction, QMenu
-from PyQt5.QtGui import QCursor, QIcon, QPaintEvent, QPainter, QPen
-from TabPadConfig import *
-import os, subprocess, sys, signal, time, multiprocessing
+from PyQt5.QtWidgets import QSystemTrayIcon, QAction, QMenu
+from PyQt5.QtGui import QCursor
+import subprocess, sys, signal, time, multiprocessing
 from pymouse import PyMouse
 from pykeyboard import PyKeyboard
+from TabPadUi import *
 
 class TabPad(QWidget):
 	def __init__(self):
@@ -28,6 +26,7 @@ class TabPad(QWidget):
 			self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 		self.setFocusPolicy(QtCore.Qt.NoFocus)
 		self.setAttribute(QtCore.Qt.WA_AcceptTouchEvents)
+		QApplication.setQuitOnLastWindowClosed(False)
 		QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_SynthesizeTouchForUnhandledMouseEvents)	
 		QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_SynthesizeMouseForUnhandledTouchEvents)	
 		self.appicon = QIcon.fromTheme("input-gaming")
@@ -114,7 +113,8 @@ class TabPad(QWidget):
 		self.show_action.triggered.connect(self.showpad)
 		self.hide_action.triggered.connect(self.hidepad)
 		self.quit_action.triggered.connect(self.quithandler)
-		self.settings_action.triggered.connect(lambda: self.open_file("TabPadConfig.py"))
+		# self.settings_action.triggered.connect(lambda: self.open_file("TabPadConfig.py"))
+		self.settings_action.triggered.connect(self.show_settings_window)
 		self.layout_action.triggered.connect(lambda: self.open_file(current_layout_file))
 		self.restart_action.triggered.connect(self.restart_program)
 		self.autorepeat_action.triggered.connect(self.finish_all_inputs)
@@ -501,6 +501,8 @@ class TabPad(QWidget):
 						text = widget.text()
 						if text == "Stop All Inputs":
 							self.finish_all_inputs(event_x, event_y)
+						if text == "Settings":
+							self.show_settings_window()
 						self.keyhandler(text, event_x, event_y)
 					elif widget_name == "leftstick":
 						nub_name = 'leftstick_nub'
@@ -751,6 +753,17 @@ class TabPad(QWidget):
 		print ('You forced killed the app.')
 		self.quithandler()
 
+	def show_settings_window(self):
+		self.hidepad()
+		widget_list = []
+		for widget in QApplication.allWidgets():
+			if type(widget).__name__ == 'MainSettings':
+				widget_list.append(widget)
+		if widget_list:
+			widget_list[-1].show()
+		else:
+			self.settings_window = MainSettings(self)
+	
 class newProcess (multiprocessing.Process):
 	def __init__(self, processID, name, x, y, key, method):
 		super(newProcess, self).__init__()
@@ -786,7 +799,7 @@ class newProcess (multiprocessing.Process):
 			self.terminate()
 			proc_list.append(self.pid)
 		print ("\nTerminated Autorepeat Processes:", *set(proc_list), sep=' ')
-	
+		
 def main():
 	app = QApplication(sys.argv)
 	ex = TabPad()

@@ -71,3 +71,4 @@ button_layout["Select"] = (55, 92, ["key", "n", 0], "#800080", (70, 30))
 
 button_layout["Close"] = (35, 92, [], "#808080", (70, 30))
 button_layout["Stop All Inputs"] = (1, 92, [], "#808080", (130, 30))
+button_layout["Settings"] = (89, 92, [], "#808080", (100, 30))
