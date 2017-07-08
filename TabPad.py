@@ -9,7 +9,7 @@
 
 from PyQt5.QtWidgets import QSystemTrayIcon, QAction, QMenu
 from PyQt5.QtGui import QCursor
-import subprocess, sys, signal, time, multiprocessing
+import subprocess, sys, signal, time, multiprocessing, copy
 from pymouse import PyMouse
 from pykeyboard import PyKeyboard
 from TabPadUi import *
@@ -43,9 +43,9 @@ class TabPad(QWidget):
 		self.autorepeat_keylist = []
 		self.sticky_keylist = []
 		self.multitouch_points = []
-		self.dpad_keys = [button_layout['U'][2], button_layout['D'][2], button_layout['L'][2], button_layout['R'][2]]
-		self.leftstick_keys = [button_layout['leftstick_U'][2], button_layout['leftstick_D'][2], button_layout['leftstick_L'][2], button_layout['leftstick_R'][2]]
-		self.rightstick_keys = [button_layout['rightstick_U'][2], button_layout['rightstick_D'][2], button_layout['rightstick_L'][2], button_layout['rightstick_R'][2]]
+		self.dpad_keys = [self.useable_keys('U'), self.useable_keys('D'), self.useable_keys('L'), self.useable_keys('R')]
+		self.leftstick_keys = [self.useable_keys('leftstick_U'), self.useable_keys('leftstick_D'), self.useable_keys('leftstick_L'), self.useable_keys('leftstick_R')]
+		self.rightstick_keys = [self.useable_keys('rightstick_U'), self.useable_keys('rightstick_D'), self.useable_keys('rightstick_L'), self.useable_keys('rightstick_R')]
 		self.xdotool = "xdotool"
 		self.pyuserinput_process = None
 		self.py_mouse = PyMouse()
@@ -60,17 +60,16 @@ class TabPad(QWidget):
 			button_layout["Hide"] = button_layout.pop("Close")
 		else:
 			button_layout["Close"] = button_layout.pop("Close")
-
 		for k, v in button_layout.items():
-			if v[0] != None or v[1] != None:
+			if v[0] >= 0 or v[1] >= 0:
 				if k == "dpad":
-					self.create_dpad(k, *v)
+					self.create_dpad(k, v[0], v[1], (v[2], v[3]), v[4], [v[6], v[7]])
 				elif k == "leftstick":
-					self.create_sticks(k, *v)
+					self.create_sticks(k, v[0], v[1], (v[2], v[3]), v[4], [v[6], v[7]])
 				elif k == "rightstick":
-					self.create_sticks(k, *v)
+					self.create_sticks(k, v[0], v[1], (v[2], v[3]), v[4], [v[6], v[7]])
 				else:
-					self.createandmove(k, *v)
+					self.createandmove(k, v[0], v[1], (v[2], v[3]), v[4], [v[6], v[7]])
 		self.systraysetup()
 		self.setGeometry(self.overlay_x_position, self.overlay_y_position, self.overlay_width, self.overlay_height)
 		self.setWindowTitle('TabPad')
@@ -79,7 +78,7 @@ class TabPad(QWidget):
 			self.hidepad()
 		# self.activateWindow()
 
-	def createandmove(self, label, xper, yper, command, color, btnsize):
+	def createandmove(self, label, xper, yper, btnsize, color, command):
 		qbtn = QPushButton(label, self)
 		stl = self.get_style(button_border_size, button_border_radius, \
 			button_border_color, color, button_opacity)
@@ -107,12 +106,13 @@ class TabPad(QWidget):
 		self.tray_icon.setIcon(self.appicon)
 
 		self.show_action = QAction("Show", self)
-		self.quit_action = QAction("Exit", self)
+		self.quit_action = QAction("Quit", self)
 		self.hide_action = QAction("Hide", self)
 		self.settings_action = QAction("Settings", self)
 		self.layout_action = QAction("Edit Current Layout", self)
 		self.restart_action = QAction("Restart", self)
 		self.autorepeat_action = QAction("Stop All Inputs", self)
+		self.about_action = QAction("About TabPad", self)
 
 		self.show_action.setIcon(QIcon.fromTheme("go-home"))
 		self.hide_action.setIcon(QIcon.fromTheme("go-down"))
@@ -121,14 +121,16 @@ class TabPad(QWidget):
 		self.quit_action.setIcon(QIcon.fromTheme("application-exit"))
 		self.autorepeat_action.setIcon(QIcon.fromTheme("process-stop"))
 		self.restart_action.setIcon(QIcon.fromTheme("view-refresh"))
-		
+		self.about_action.setIcon(QIcon.fromTheme("help-about"))
+
 		self.show_action.triggered.connect(self.showpad)
 		self.hide_action.triggered.connect(self.hidepad)
 		self.quit_action.triggered.connect(self.quithandler)
 		self.settings_action.triggered.connect(self.show_settings_window)
-		self.layout_action.triggered.connect(lambda: self.open_file(current_layout_file))
+		self.layout_action.triggered.connect(self.show_layout_window)
 		self.restart_action.triggered.connect(self.restart_program)
 		self.autorepeat_action.triggered.connect(self.finish_all_inputs)
+		self.about_action.triggered.connect(self.show_about_dialog)
 		
 		self.tray_menu = QMenu()
 		self.tray_menu.addAction(self.show_action)
@@ -137,6 +139,7 @@ class TabPad(QWidget):
 		self.tray_menu.addAction(self.layout_action)
 		self.tray_menu.addAction(self.settings_action)
 		self.tray_menu.addAction(self.restart_action)
+		self.tray_menu.addAction(self.about_action)
 		self.tray_menu.addAction(self.quit_action)
 		self.tray_icon.setContextMenu(self.tray_menu)
 		self.tray_icon.show()
@@ -156,10 +159,14 @@ class TabPad(QWidget):
 		self.hide()
 
 	def showpad(self):
+		for widget in QApplication.allWidgets():
+			if type(widget).__name__ == 'MainSettings' \
+				or type(widget).__name__ == 'LayoutSettings':
+				widget.close()
 		self.show()
 		# self.activateWindow()
 
-	def create_dpad(self, label, xper, yper, command, color, btnsize):
+	def create_dpad(self, label, xper, yper, btnsize, color, command):
 		dpad_frame = QWidget(self)
 		dpad_frame.setObjectName("dpad_frame")
 		stl = self.get_style(dpad_background_border_size, dpad_background_border_radius, \
@@ -243,22 +250,13 @@ class TabPad(QWidget):
 			stl += extrastyle
 		return stl
 
-	def open_file(self, file):
-		directory_path = os.getcwd()
-		full_path = os.path.join(directory_path, file)
-		subprocess.Popen(["xdg-open", full_path])
-		try:
-			subprocess.Popen(["xdg-open", full_path])
-		except:
-			pass
-
 	def set_overlay(self, x, y, w, h):
 		self.overlay_x_position = self.percentconvertor(x, self.screen_width)
 		self.overlay_y_position = self.percentconvertor(y, self.screen_height)
 		self.overlay_width = self.percentconvertor(w, self.screen_width)
 		self.overlay_height = self.percentconvertor(h, self.screen_height)
 
-	def create_sticks(self, label, xper, yper, command, color, btnsize):
+	def create_sticks(self, label, xper, yper, btnsize, color, command):
 		stick_widget = QWidget(self)
 		nub = QWidget(self)
 		dz = QWidget(stick_widget)
@@ -440,19 +438,20 @@ class TabPad(QWidget):
 
 	def keyhandler(self, label, x=0, y=0, names=None):
 		if names == None:
-			cmd = button_layout[label][2]
+			# cmd = button_layout[label][2]
+			cmd = self.useable_keys(label)
 			if hide_on_close and label == "Hide":
 				self.hidepad()
 			elif not hide_on_close and label == "Close":
 				self.quithandler()
 			elif cmd:
 				self.diagonal_movement_overlap_fix(label, x, y)
-				self.execute_keypress(cmd, 'down', x, y)
+				self.execute_keypress(cmd, 'down', x, y, label)
 		else:
 			if names:
 				for n in names:
-					cmd = button_layout[n][2]
-					self.execute_keypress(cmd, 'down', x, y)
+					cmd = self.useable_keys(n)
+					self.execute_keypress(cmd, 'down', x, y, n)
 
 	def multitouch_fix(self, touch_points):
 		tp = touch_points
@@ -488,13 +487,14 @@ class TabPad(QWidget):
 		if diff_list:
 			for d in diff_list:
 				if d[1] == 'dpad_frame':
-					self.trigger_key_up(d[0].x(), d[0].y(), self.dpad_keys)
-				elif d[1] == 'leftstick'or d[1] == 'leftstick_nub':
-					self.trigger_key_up(d[0].x(), d[0].y(), self.leftstick_keys)
-				elif d[1] == 'rightstick'or d[1] == 'rightstick_nub':
-					self.trigger_key_up(d[0].x(), d[0].y(), self.rightstick_keys)
+					self.trigger_key_up(d[0].x(), d[0].y(), self.dpad_keys, d[1])
+				elif d[1] == 'leftstick' or d[1] == 'leftstick_nub' or d[1] == 'leftstick_deadzone':
+					self.trigger_key_up(d[0].x(), d[0].y(), self.leftstick_keys, d[1])
+				elif d[1] == 'rightstick' or d[1] == 'rightstick_nub' or d[1] == 'rightstick_deadzone':
+					self.trigger_key_up(d[0].x(), d[0].y(), self.rightstick_keys, d[1])
 				else:
-					self.trigger_key_up(d[0].x(), d[0].y(), [button_layout[d[1]][2]])
+					cmd = self.useable_keys(d[1])
+					self.trigger_key_up(d[0].x(), d[0].y(), [cmd], d[1])
 		self.multitouch_points = self.multitouch_points[-2:]
 
 	def eventFilter(self, source, event):
@@ -575,23 +575,23 @@ class TabPad(QWidget):
 
 	def diagonal_movement_overlap_fix(self, name, x, y):
 		if name == "U" or name == "D" or name == "L" or name == "R":
-			cmd = button_layout[name][2]
+			cmd = self.useable_keys(name)
 			keys = list(self.dpad_keys)
 			if cmd in keys:
 				keys.remove(cmd)
-				self.trigger_key_up(x, y, keys)
+				self.trigger_key_up(x, y, keys, name)
 		if name == "leftstick_U" or name == "leftstick_D" or name == "leftstick_L" or name == "leftstick_R":
-			cmd = button_layout[name][2]
+			cmd = self.useable_keys(name)
 			keys = list(self.leftstick_keys)
 			if cmd in keys:
 				keys.remove(cmd)
-				self.trigger_key_up(x, y, keys)
+				self.trigger_key_up(x, y, keys, name)
 		if name == "rightstick_U" or name == "rightstick_D" or name == "rightstick_L" or name == "rightstick_R":
-			cmd = button_layout[name][2]
+			cmd = self.useable_keys(name)
 			keys = list(self.rightstick_keys)
 			if cmd in keys:
 				keys.remove(cmd)
-				self.trigger_key_up(x, y, keys)
+				self.trigger_key_up(x, y, keys, name)
 
 	def is_point_inside_button(self, x, y, startx, endx, starty, endy):
 		if x >= startx and x <= endx \
@@ -599,18 +599,18 @@ class TabPad(QWidget):
 			return True
 		return False
 
-	def trigger_key_up(self, x=0, y=0, keys=None):
-		if keys != None:
+	def trigger_key_up(self, x=0, y=0, keys=None, label=None):
+		if keys != None and label != None:
 			if keys:
 				for k in keys:
-					self.execute_keypress(k, 'up', x, y)
+					self.execute_keypress(k, 'up', x, y, label)
 					if k in self.keydown_list:
 						self.keydown_list.remove(k)
-		if keys == None:
+		if keys == None and label == None:
 			if self.keydown_list:
 				while self.keydown_list:
 					for i in self.keydown_list:
-						self.execute_keypress(i, 'up', x, y)
+						self.execute_keypress(i, 'up', x, y, label)
 						self.keydown_list.remove(i)
 
 	def finish_all_inputs(self, x=0, y=0):
@@ -631,7 +631,7 @@ class TabPad(QWidget):
 		if self.sticky_keylist:
 			while self.sticky_keylist:
 				for i in self.sticky_keylist:
-					self.execute_keypress(i, 'up', x, y)
+					self.execute_keypress(i, 'up', x, y, None)
 					self.sticky_keylist.remove(i)
 
 	def set_input_type(self):
@@ -640,11 +640,24 @@ class TabPad(QWidget):
 			self.keyup_string = "keyup"
 			self.mousedown_string = "mousedown"
 			self.mouseup_string = "mouseup"
+			self.key_tap_string = 'key'
+			self.click_once_string = 'click'
 		if input_method == "pyuserinput":
 			self.keydown_string ="press_key"
 			self.keyup_string = "release_key"
 			self.mousedown_string = "press"
 			self.mouseup_string = "release"
+			self.key_tap_string = 'key'
+			self.click_once_string = 'click'
+
+	def useable_keys(self, label):
+		keylist = []
+		if not label == '':
+			l = button_layout[label]
+			for i in range(len(l)-1):
+				if l[i] == 'key' or l[i] == 'click':
+					keylist.append([l[i], l[i+1]])
+		return keylist
 
 	def modify_keys(self, input_list, input_type):
 		if input_list[0] == "key" and input_type == "down":
@@ -657,89 +670,118 @@ class TabPad(QWidget):
 			input_list[0] = self.mouseup_string
 		return input_list
 
-	def execute_keypress(self, cmnd, keytype, x, y):
+	def execute_keypress(self, cmnd, keytype, x, y, name):
+		if name != None and name != 'dpad_frame' and name != 'leftstick' \
+			and name != 'rightstick' and name != 'leftstick_nub' \
+			and name != 'rightstick_nub' and name != 'leftstick_deadzone' \
+			and name != 'rightstick_deadzone':
+			values = button_layout[name]
+			value = values[5]
+		else:
+			value = 'normal'
 		if cmnd:
-			c = list(cmnd)
+			c = copy.deepcopy(cmnd)
 			if input_method == "xdotool":
-				if c[-1] == 0:
-					c = self.modify_keys(c, keytype)
-					c.insert(0, self.xdotool)
-					subprocess.Popen(c[:-1], stdout=subprocess.PIPE)
+				if value == 'normal':
+					for a in c:
+						a = self.modify_keys(a, keytype)
+						a.insert(0, self.xdotool)
+						subprocess.Popen(a, stdout=subprocess.PIPE)
 					if not cmnd in self.keydown_list and keytype == 'down':
 						self.keydown_list.append(cmnd)
-				if c[-1] == 2:
-					c = self.modify_keys(c, keytype)
-					c.insert(0, self.xdotool)
-					subprocess.Popen(c[:-1], stdout=subprocess.PIPE)
+				if value == 'sticky':
+					for a in c:
+						a = self.modify_keys(a, keytype)
+						a.insert(0, self.xdotool)
+						subprocess.Popen(a, stdout=subprocess.PIPE)
 					if self.sticky_keylist:
 						if not cmnd in self.sticky_keylist and keytype == 'down':
 							self.sticky_keylist.append(cmnd)
 					else:
 						if keytype == 'down':
 							self.sticky_keylist.append(cmnd)
-				if c[-1] == 1:
+				if value == 'combo':
+					for a in c:
+						a.insert(0, self.xdotool)
+						subprocess.Popen(a, stdout=subprocess.PIPE)
+						time.sleep(combo_interval)
+				if value == 'autorepeat':
 					if keytype == 'down':
-						c = 'while true; do ' + self.xdotool + ' ' + c[0] + ' --repeat ' + str(autorepeat_count) + ' --delay ' + str(self.roundify(autorepeat_interval*1000)) + ' ' + c[1] + '; done'
 						if self.autorepeat_keylist:
 							l = []
-							for a in self.autorepeat_keylist:
-								if not cmnd in a:
-									l.append(a)
+							for b in self.autorepeat_keylist:
+								if not cmnd in b:
+									l.append(b)
 							if len(self.autorepeat_keylist) == len(l):
-								p = subprocess.Popen(c, stdout=subprocess.PIPE, shell=True)
-								self.autorepeat_keylist.append((cmnd, p))
+								for a in c:
+									a = 'while true; do ' + self.xdotool + ' ' + a[0] + ' --repeat ' + str(autorepeat_count) + ' --delay ' + str(self.roundify(autorepeat_interval*1000)) + ' ' + a[1] + '; done'
+									p = subprocess.Popen(a, stdout=subprocess.PIPE, shell=True)
+									self.autorepeat_keylist.append((cmnd, p))
 						else:
-							p = subprocess.Popen(c, stdout=subprocess.PIPE, shell=True)
-							self.autorepeat_keylist.append((cmnd, p))
+							for a in c:
+								a = 'while true; do ' + self.xdotool + ' ' + a[0] + ' --repeat ' + str(autorepeat_count) + ' --delay ' + str(self.roundify(autorepeat_interval*1000)) + ' ' + a[1] + '; done'
+								p = subprocess.Popen(a, stdout=subprocess.PIPE, shell=True)
+								self.autorepeat_keylist.append((cmnd, p))
 			if input_method == "pyuserinput":
-				if c[-1] == 0:
-					c = self.modify_keys(c, keytype)
-					if c[0] == "press_key":
-						self.py_keyboard.press_key(c[1])
-					if c[0] == "release_key":
-						self.py_keyboard.release_key(c[1])
-					if c[0] == "press":
-						self.py_mouse.press(x, y, int(c[1]))
-					if c[0] == "release":
-						self.py_mouse.release(x, y, int(c[1]))
+				if value == 'normal':
+					for a in c:
+						a = self.modify_keys(a, keytype)
+						if a[0] == "press_key":
+							self.py_keyboard.press_key(a[1])
+						if a[0] == "release_key":
+							self.py_keyboard.release_key(a[1])
+						if a[0] == "press":
+							self.py_mouse.press(x, y, int(a[1]))
+						if a[0] == "release":
+							self.py_mouse.release(x, y, int(a[1]))
 					if not cmnd in self.keydown_list and keytype == 'down':
 						self.keydown_list.append(cmnd)
-				if c[-1] == 2:
-					c = self.modify_keys(c, keytype)
-					if c[0] == "press_key":
-						self.py_keyboard.press_key(c[1])
-					if c[0] == "release_key":
-						self.py_keyboard.release_key(c[1])
-					if c[0] == "press":
-						self.py_mouse.press(x, y, int(c[1]))
-					if c[0] == "release":
-						self.py_mouse.release(x, y, int(c[1]))
+				if value == 'combo':
+					for a in c:
+						if a[0] == "key":
+							self.py_keyboard.tap_key(a[1])
+						if a[0] == "click":
+							self.py_mouse.click(x, y, int(a[1]))
+						time.sleep(combo_interval)
+				if value == 'sticky':
+					for a in c:
+						a = self.modify_keys(a, keytype)
+						if a[0] == "press_key":
+							self.py_keyboard.press_key(a[1])
+						if a[0] == "release_key":
+							self.py_keyboard.release_key(a[1])
+						if a[0] == "press":
+							self.py_mouse.press(x, y, int(a[1]))
+						if a[0] == "release":
+							self.py_mouse.release(x, y, int(a[1]))
 					if self.sticky_keylist:
 						if not cmnd in self.sticky_keylist and keytype == 'down':
 							self.sticky_keylist.append(cmnd)
 					else:
 						if keytype == 'down':
 							self.sticky_keylist.append(cmnd)
-				if c[-1] == 1:
+				if value == 'autorepeat':
 					if keytype == 'down':
 						if self.autorepeat_keylist:
 							l = []
-							for a in self.autorepeat_keylist:
-								if not cmnd in a:
-									l.append(a)
+							for b in self.autorepeat_keylist:
+								if not cmnd in b:
+									l.append(b)
 							if len(self.autorepeat_keylist) == len(l):
 								p = None
-								if c[0] == "key":
-									self.pyuserinput_autorepeater(x, y, c[1], 'key')
-								if c[0] == "click":
-									self.pyuserinput_autorepeater(x, y, int(c[1], 'click'))
+								for a in c:
+									if a[0] == "key":
+										self.pyuserinput_autorepeater(x, y, a[1], 'key')
+									if a[0] == "click":
+										self.pyuserinput_autorepeater(x, y, int(a[1]), 'click')
 								self.autorepeat_keylist.append((cmnd, p))
 						else:
 							p = None
-							if c[0] == "key":
-								self.pyuserinput_autorepeater(x, y, c[1], 'key')
-							if c[0] == "click":
-								self.pyuserinput_autorepeater(x, y, int(c[1], 'click'))
+							for a in c:
+								if a[0] == "key":
+									self.pyuserinput_autorepeater(x, y, a[1], 'key')
+								if a[0] == "click":
+									self.pyuserinput_autorepeater(x, y, int(a[1]), 'click')
 							self.autorepeat_keylist.append((cmnd, p))
 
 	def pyuserinput_autorepeater(self, x, y, key, method):
@@ -767,15 +809,35 @@ class TabPad(QWidget):
 
 	def show_settings_window(self):
 		self.hidepad()
-		widget_list = []
 		for widget in QApplication.allWidgets():
 			if type(widget).__name__ == 'MainSettings':
-				widget_list.append(widget)
-		if widget_list:
-			widget_list[-1].show()
-		else:
-			self.settings_window = MainSettings(self)
-	
+				widget.close()
+
+		self.settings_window = MainSettings(self)
+		r = self.settings_window.exec_()
+
+	def show_layout_window(self):
+		self.hidepad()
+		for widget in QApplication.allWidgets():
+			if type(widget).__name__ == 'LayoutSettings':
+				widget.close()
+		self.layout_window = LayoutSettings(self)
+		r = self.layout_window.exec_()
+
+	def show_about_dialog(self):
+		self.hidepad()
+		for widget in QApplication.allWidgets():
+			if type(widget).__name__ == 'Dialog':
+				widget.close()
+		text = ("TabPad is an onscreen gamepad for Linux touchscreen devices (mainly tablets).<br><br>"
+			
+			"Developed by nitg16.<br><br>"
+
+			"<a href=\"https://github.com/nitg16/TabPad\">Source Code</a>"
+			)
+		d = Dialog(self, text, 'About TabPad')
+		r = d.exec_()
+
 class newProcess (multiprocessing.Process):
 	def __init__(self, processID, name, x, y, key, method):
 		super(newProcess, self).__init__()
