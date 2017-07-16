@@ -500,7 +500,7 @@ class InputDialog(QDialog):
 		vbox = QVBoxLayout()
 		widget.setLayout(layout)
 		btn_list = []
-		positions = [(i,j) for i in range(32) for j in range(4)]
+		positions = [(i,j) for i in range(int(len(syms)/4)+1) for j in range(4)]
 		for position, name in zip(positions, syms):
 			kbtn = QPushButton(name)
 			kbtn.setMinimumSize(QtCore.QSize(50, 50))
